@@ -49,35 +49,35 @@
       <animate attributeName="opacity" values="0.55;1;0.55" dur="3s" repeatCount="indefinite"/>
     </circle>
 
-    <!-- ===== gold filament network (kept in the upper bulb, clear of LTS) ===== -->
-    <g stroke="url(#gold)" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.92">
-      <line x1="256" y1="135" x2="320" y2="165"/>
-      <line x1="256" y1="135" x2="192" y2="182"/>
-      <line x1="320" y1="165" x2="360" y2="210"/>
-      <line x1="320" y1="165" x2="256" y2="196"/>
-      <line x1="192" y1="182" x2="256" y2="196"/>
-      <line x1="192" y1="182" x2="226" y2="232"/>
-      <line x1="256" y1="196" x2="226" y2="232"/>
-      <line x1="256" y1="196" x2="300" y2="240"/>
-      <line x1="256" y1="196" x2="360" y2="210"/>
-      <line x1="300" y1="240" x2="360" y2="210"/>
-      <line x1="226" y1="232" x2="300" y2="240"/>
-      <line x1="320" y1="165" x2="192" y2="182"/>
+    <!-- ===== gold filament network (upper bulb only — clear band kept for LTS) ===== -->
+    <g stroke="url(#gold)" stroke-width="5.5" stroke-linecap="round" fill="none">
+      <line x1="256" y1="130" x2="322" y2="162"/>
+      <line x1="256" y1="130" x2="190" y2="178"/>
+      <line x1="322" y1="162" x2="358" y2="205"/>
+      <line x1="322" y1="162" x2="256" y2="190"/>
+      <line x1="190" y1="178" x2="256" y2="190"/>
+      <line x1="190" y1="178" x2="224" y2="210"/>
+      <line x1="256" y1="190" x2="224" y2="210"/>
+      <line x1="256" y1="190" x2="300" y2="212"/>
+      <line x1="256" y1="190" x2="358" y2="205"/>
+      <line x1="300" y1="212" x2="358" y2="205"/>
+      <line x1="224" y1="210" x2="300" y2="212"/>
+      <line x1="322" y1="162" x2="190" y2="178"/>
     </g>
 
     <!-- network nodes (teal + gold), pulsing -->
     <g>
-      <circle cx="256" cy="135" r="8"  fill="#f3d488"/>
-      <circle cx="320" cy="165" r="13" fill="url(#teal)">
+      <circle cx="256" cy="130" r="8"  fill="#f3d488"/>
+      <circle cx="322" cy="162" r="13" fill="url(#teal)">
         <animate attributeName="r" values="13;16;13" dur="2.2s" repeatCount="indefinite"/></circle>
-      <circle cx="360" cy="210" r="14" fill="url(#teal)">
+      <circle cx="358" cy="205" r="14" fill="url(#teal)">
         <animate attributeName="r" values="14;17;14" dur="2.6s" begin="0.3s" repeatCount="indefinite"/></circle>
-      <circle cx="192" cy="182" r="13" fill="url(#teal)">
+      <circle cx="190" cy="178" r="13" fill="url(#teal)">
         <animate attributeName="r" values="13;15;13" dur="2.4s" begin="0.6s" repeatCount="indefinite"/></circle>
-      <circle cx="256" cy="196" r="11" fill="#f3d488">
+      <circle cx="256" cy="190" r="11" fill="#f3d488">
         <animate attributeName="r" values="11;13;11" dur="2.8s" begin="0.2s" repeatCount="indefinite"/></circle>
-      <circle cx="226" cy="232" r="9"  fill="#f3d488"/>
-      <circle cx="300" cy="240" r="10" fill="url(#teal)">
+      <circle cx="224" cy="210" r="9"  fill="#f3d488"/>
+      <circle cx="300" cy="212" r="10" fill="url(#teal)">
         <animate attributeName="r" values="10;12;10" dur="2.1s" begin="0.4s" repeatCount="indefinite"/></circle>
     </g>
 

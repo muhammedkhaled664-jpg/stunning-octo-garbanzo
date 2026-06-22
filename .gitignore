@@ -1,0 +1,15 @@
+# Active client config — contains the Supabase URL + publishable key.
+# Copy config.example.js to config.js and fill in per client.
+config.js
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Logs & dependencies (none committed today, but keep them out)
+node_modules/
+npm-debug.log*
+*.log

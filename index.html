@@ -6,6 +6,11 @@
     <title>LogiSync | Operations Command</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#0d9488">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="tailwind.build.css">
@@ -271,6 +276,7 @@
                     <div class="mt-6 flex flex-col gap-2 pt-6 border-t border-gray-200 dark:border-borderline">
                         <button onclick="copyEOD()" id="eodBtn" class="text-xs text-deepTeal-600 dark:text-deepTeal-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-teal-200 hidden"><i class="fa-solid fa-clipboard mr-2"></i>Copy Weekly</button>
                         <button onclick="exportToExcel()" id="excelBtn" class="text-xs text-green-600 dark:text-green-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-green-200 hidden"><i class="fa-solid fa-file-excel mr-2"></i>Export .XLSX</button>
+                        <button onclick="exportToCSV()" id="csvBtn" class="text-xs text-teal-600 dark:text-teal-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-teal-500/30 hidden"><i class="fa-solid fa-file-csv mr-2"></i>Export .CSV</button>
                         <button onclick="importTasks()" id="importBtn" class="text-xs text-blue-600 dark:text-blue-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-blue-200 dark:border-blue-500/30"><i class="fa-solid fa-file-import mr-2"></i>Import Tasks</button>
                         <button onclick="downloadTemplate('tasks')" class="text-xs text-gray-600 dark:text-gray-300 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-gray-200 dark:border-borderline"><i class="fa-solid fa-file-arrow-down mr-2"></i>Task Template</button>
                         <button onclick="backupAll()" id="backupBtn" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-indigo-200 dark:border-indigo-500/30"><i class="fa-solid fa-shield-halved mr-2"></i>Backup All Data</button>
@@ -304,6 +310,7 @@
                         <button onclick="monthlyReport()" class="h-[44px] text-xs text-deepTeal-600 dark:text-deepTeal-400 font-medium px-4 rounded-xl bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-deepTeal-500/30"><i class="fa-solid fa-file-pdf mr-2"></i>Monthly Report</button>
                         <button onclick="shareReport()" class="h-[44px] text-xs text-emerald-600 dark:text-emerald-400 font-medium px-4 rounded-xl bg-white dark:bg-panel shadow-sm border border-emerald-200 dark:border-emerald-500/30"><i class="fa-brands fa-whatsapp mr-2"></i>Share</button>
                         <button onclick="exportNumbersExcel()" class="h-[44px] text-xs text-green-600 dark:text-green-500 font-medium px-4 rounded-xl bg-white dark:bg-panel shadow-sm border border-green-200"><i class="fa-solid fa-file-excel mr-2"></i>Export</button>
+                        <button onclick="exportNumbersCSV()" class="h-[44px] text-xs text-teal-600 dark:text-teal-400 font-medium px-4 rounded-xl bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-teal-500/30"><i class="fa-solid fa-file-csv mr-2"></i>CSV</button>
                     </div>
                 </div>
                 <!-- Smart insights -->
@@ -347,6 +354,7 @@
                         <button onclick="downloadTemplate('coaching')" class="h-[44px] text-xs text-gray-600 dark:text-gray-300 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-gray-200 dark:border-borderline"><i class="fa-solid fa-file-arrow-down mr-1.5"></i>Template</button>
                         <button onclick="importCoaching()" class="h-[44px] text-xs text-blue-600 dark:text-blue-400 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-blue-200 dark:border-blue-500/30"><i class="fa-solid fa-file-import mr-1.5"></i>Import</button>
                         <button onclick="exportCoachingExcel()" class="h-[44px] text-xs text-green-600 dark:text-green-500 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-green-200"><i class="fa-solid fa-file-excel mr-1.5"></i>Export</button>
+                        <button onclick="exportCoachingCSV()" class="h-[44px] text-xs text-teal-600 dark:text-teal-400 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-teal-500/30"><i class="fa-solid fa-file-csv mr-1.5"></i>CSV</button>
                         <button onclick="openCoachingForm(null)" class="h-[44px] bg-deepTeal-600 hover:bg-deepTeal-500 text-white text-xs font-semibold px-4 rounded-xl shadow-sm transition-colors"><i class="fa-solid fa-plus mr-1.5"></i>New Record</button>
                     </div>
                 </div>
@@ -583,6 +591,28 @@
             else if (/complete|copied|saved|success|added|done/i.test(s)) t = 'success';
             toast(s, t);
         };
+        /* ---- Throttled offline / connection-error toast ----
+           Avoids spamming the user when many requests fail at once or the
+           connection flaps; shows at most one notice every THROTTLE_MS. */
+        const _CONN_THROTTLE_MS = 8000;
+        let _lastConnToast = 0;
+        function connectionToast(msg) {
+            const now = Date.now();
+            if (now - _lastConnToast < _CONN_THROTTLE_MS) return;
+            _lastConnToast = now;
+            toast(msg || 'Connection problem — you appear to be offline.', 'error');
+        }
+        window.connectionToast = connectionToast;
+        window.addEventListener('offline', () => connectionToast('You are offline — changes may not be saved.'));
+        window.addEventListener('online', () => { _lastConnToast = 0; toast('Back online ✓', 'success'); });
+        // Surface fetch/network failures (e.g. Supabase requests) through the throttled toast
+        window.addEventListener('unhandledrejection', (e) => {
+            const m = String(e && e.reason && (e.reason.message || e.reason) || '');
+            if (/failed to fetch|networkerror|load failed|fetch event|err_internet/i.test(m) || !navigator.onLine) {
+                connectionToast();
+            }
+        });
+
         function confirmDialog(message, { confirmText = 'Confirm', danger = false } = {}) {
             return new Promise(resolve => {
                 const ov = document.createElement('div');
@@ -710,6 +740,7 @@
                     document.getElementById('eodBtn').classList.remove('hidden');
                     document.getElementById('mobileEodBtn').classList.remove('hidden');
                     document.getElementById('excelBtn').classList.remove('hidden');
+                    document.getElementById('csvBtn').classList.remove('hidden');
                     document.getElementById('leadershipBtn').classList.remove('hidden');
                 } else {
                     mInput.disabled = true;
@@ -718,6 +749,7 @@
                     document.getElementById('eodBtn').classList.add('hidden');
                     document.getElementById('mobileEodBtn').classList.add('hidden');
                     document.getElementById('excelBtn').classList.add('hidden');
+                    document.getElementById('csvBtn').classList.add('hidden');
                     document.getElementById('leadershipBtn').classList.add('hidden');
                 }
 
@@ -1232,20 +1264,34 @@
             document.body.removeChild(textArea);
         }
 
-        async function exportToExcel() {
-            await ensureXLSX();
-            const { data, error } = await _client.from('tasks').select('*').order('created_at', { ascending: false });
-            if (error || !data || data.length === 0) {
-                alert("No data found to export."); return;
-            }
-            
-            let displayData = data;
-            
-            if (displayData.length === 0) {
-                alert("No data found to export."); return;
-            }
+        /* ===================== CSV EXPORT HELPERS ===================== */
+        function _csvCell(v) {
+            if (v == null) v = '';
+            v = String(v);
+            return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+        }
+        function rowsToCSV(rows) {
+            if (!rows || !rows.length) return '';
+            const headers = Object.keys(rows[0]);
+            const lines = [headers.map(_csvCell).join(',')];
+            rows.forEach(r => lines.push(headers.map(h => _csvCell(r[h])).join(',')));
+            return '﻿' + lines.join('\r\n');   // BOM so Excel reads UTF-8
+        }
+        function downloadCSV(rows, fileName) {
+            const blob = new Blob([rowsToCSV(rows)], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = fileName;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+        const _exportPrefix = () => (CFG.exportPrefix || CFG.brandName || 'Ops').replace(/\s+/g, '_');
+        const _stamp = () => new Date().toISOString().slice(0, 10);
 
-            const excelData = displayData.map(t => ({
+        async function _buildTaskRows() {
+            const { data, error } = await _client.from('tasks').select('*').order('created_at', { ascending: false });
+            if (error || !data || data.length === 0) { alert("No data found to export."); return null; }
+            return data.map(t => ({
                 'Date Logged': new Date(t.created_at).toLocaleDateString(),
                 'Time Logged': new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 'Manager': t.manager || 'Agent',
@@ -1256,14 +1302,23 @@
                 'Active Threat?': t.has_flare ? 'YES - CRITICAL' : 'No',
                 'Manager Updates': t.briefing || 'None'
             }));
+        }
 
+        async function exportToExcel() {
+            await ensureXLSX();
+            const excelData = await _buildTaskRows();
+            if (!excelData) return;
             const worksheet = window.XLSX.utils.json_to_sheet(excelData);
             const workbook = window.XLSX.utils.book_new();
-            const prefix = (CFG.exportPrefix || CFG.brandName || 'Ops').replace(/\s+/g, '_');
+            const prefix = _exportPrefix();
             window.XLSX.utils.book_append_sheet(workbook, worksheet, `${prefix}_Data`.slice(0, 31));
+            window.XLSX.writeFile(workbook, `${prefix}_Export_${_stamp()}.xlsx`);
+        }
 
-            const fileName = `${prefix}_Export_${new Date().toISOString().slice(0,10)}.xlsx`;
-            window.XLSX.writeFile(workbook, fileName);
+        async function exportToCSV() {
+            const rows = await _buildTaskRows();
+            if (!rows) return;
+            downloadCSV(rows, `${_exportPrefix()}_Export_${_stamp()}.csv`);
         }
 
         /* ===================== WEEKLY NUMBERS ===================== */
@@ -1447,10 +1502,7 @@
             return new Date(y, m - 1, 1).toLocaleDateString([], { month: 'long', year: 'numeric' });
         }
 
-        async function exportNumbersExcel() {
-            await ensureXLSX();
-            const agent = currentNumbersAgent();
-            const period = document.getElementById('numMonth').value;
+        function _buildNumbersRows() {
             const rows = WEEKS.map(w => {
                 const r = getRow(w);
                 return { Week: 'Week ' + w, 'Total Calls': r.total, 'Scored Calls': r.scored, 'Pass Calls': r.pass,
@@ -1458,12 +1510,24 @@
             });
             let tT = 0, tS = 0, tP = 0, tF = 0; WEEKS.forEach(w => { const r = getRow(w); tT += r.total; tS += r.scored; tP += r.pass; tF += r.fail; });
             rows.push({ Week: 'Total', 'Total Calls': tT, 'Scored Calls': tS, 'Pass Calls': tP, 'Fail Calls': tF, 'Average': avgPct(tP, tS).toFixed(2) + '%' });
+            return rows;
+        }
 
+        async function exportNumbersExcel() {
+            await ensureXLSX();
+            const agent = currentNumbersAgent();
+            const period = document.getElementById('numMonth').value;
+            const rows = _buildNumbersRows();
             const ws = window.XLSX.utils.json_to_sheet(rows);
             const wb = window.XLSX.utils.book_new();
-            const prefix = (CFG.exportPrefix || CFG.brandName || 'Ops').replace(/\s+/g, '_');
             window.XLSX.utils.book_append_sheet(wb, ws, (agent + ' ' + period).slice(0, 31));
-            window.XLSX.writeFile(wb, `${prefix}_Numbers_${agent}_${period}.xlsx`);
+            window.XLSX.writeFile(wb, `${_exportPrefix()}_Numbers_${agent}_${period}.xlsx`);
+        }
+
+        function exportNumbersCSV() {
+            const agent = currentNumbersAgent();
+            const period = document.getElementById('numMonth').value;
+            downloadCSV(_buildNumbersRows(), `${_exportPrefix()}_Numbers_${agent}_${period}.csv`);
         }
 
         /* ===================== COACHING ===================== */
@@ -1690,10 +1754,8 @@
             await loadCoaching();
         }
 
-        async function exportCoachingExcel() {
-            if (!coachingData.length) { alert('No coaching records to export.'); return; }
-            await ensureXLSX();
-            const rows = coachingData.map(r => ({
+        function _buildCoachingRows() {
+            return coachingData.map(r => ({
                 'Agent': r.agent, 'Date of Call': r.call_date, '#Issue': r.issue_tag, 'Comment': r.comment,
                 'Wrong Dispo': r.wrong_dispo ? 'YES' : 'No', 'Repetitive': r.repetitive,
                 'Need Coaching': r.need_coaching ? 'Yes' : 'No', 'Team': r.team, 'Coaching Notes': r.coaching_notes,
@@ -1701,11 +1763,20 @@
                 'Warning Email': r.warning_email ? 'Yes' : 'No', 'Deductions Sheet': r.deductions_sheet ? 'Yes' : 'No',
                 'Reviewer Checked': r.reviewer_checked ? 'Yes' : 'No', 'Feedback Comments': r.feedback_comments
             }));
-            const ws = window.XLSX.utils.json_to_sheet(rows);
+        }
+
+        async function exportCoachingExcel() {
+            if (!coachingData.length) { alert('No coaching records to export.'); return; }
+            await ensureXLSX();
+            const ws = window.XLSX.utils.json_to_sheet(_buildCoachingRows());
             const wb = window.XLSX.utils.book_new();
-            const prefix = (CFG.exportPrefix || CFG.brandName || 'Ops').replace(/\s+/g, '_');
             window.XLSX.utils.book_append_sheet(wb, ws, 'Coaching');
-            window.XLSX.writeFile(wb, `${prefix}_Coaching_${new Date().toISOString().slice(0,10)}.xlsx`);
+            window.XLSX.writeFile(wb, `${_exportPrefix()}_Coaching_${_stamp()}.xlsx`);
+        }
+
+        function exportCoachingCSV() {
+            if (!coachingData.length) { alert('No coaching records to export.'); return; }
+            downloadCSV(_buildCoachingRows(), `${_exportPrefix()}_Coaching_${_stamp()}.csv`);
         }
 
         /* ===================== IMPORT (Excel / CSV) ===================== */
@@ -2205,6 +2276,14 @@
             }
             try { await navigator.clipboard.writeText(txt); } catch (e) {}
             window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+        }
+    </script>
+    <!-- PWA: register service worker (caches the static app shell only) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+            });
         }
     </script>
 </body>

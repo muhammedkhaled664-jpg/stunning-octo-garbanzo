@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="LTS">
+  <defs>
+    <!-- 3D gold tube gradient -->
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"    stop-color="#fff3c9"/>
+      <stop offset="0.18" stop-color="#f7d987"/>
+      <stop offset="0.45" stop-color="#e0ac3f"/>
+      <stop offset="0.70" stop-color="#c4882a"/>
+      <stop offset="1"    stop-color="#9c6a18"/>
+    </linearGradient>
+    <linearGradient id="goldHi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff7df" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#fff7df" stop-opacity="0"/>
+    </linearGradient>
+    <!-- teal base gradient -->
+    <linearGradient id="teal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f8c89"/>
+      <stop offset="1" stop-color="#0c5450"/>
+    </linearGradient>
+    <radialGradient id="bulbGlow" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0"   stop-color="#fff7da" stop-opacity="0.85"/>
+      <stop offset="0.6" stop-color="#ffe9a8" stop-opacity="0.18"/>
+      <stop offset="1"   stop-color="#ffe9a8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ltsGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"   stop-color="#caa23c"/>
+      <stop offset="0.5" stop-color="#fff0bf"/>
+      <stop offset="1"   stop-color="#caa23c"/>
+      <animateTransform attributeName="gradientTransform" type="translate"
+        values="-1 0; 1 0; -1 0" dur="3.6s" repeatCount="indefinite"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="dropp" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+    <path id="ring" d="M168 352 A156 156 0 1 1 344 352" fill="none"/>
+  </defs>
+
+  <!-- gentle float for the whole mark -->
+  <g filter="url(#dropp)">
+    <animateTransform attributeName="transform" type="translate"
+      values="0 0; 0 -7; 0 0" dur="4.4s" repeatCount="indefinite" additive="sum"/>
+
+    <!-- inner bulb glow -->
+    <circle cx="256" cy="206" r="150" fill="url(#bulbGlow)">
+      <animate attributeName="opacity" values="0.55;1;0.55" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- ===== gold filament network ===== -->
+    <g stroke="url(#gold)" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.95">
+      <line x1="190" y1="250" x2="300" y2="170"/>
+      <line x1="300" y1="170" x2="372" y2="232"/>
+      <line x1="190" y1="250" x2="262" y2="300"/>
+      <line x1="262" y1="300" x2="372" y2="232"/>
+      <line x1="262" y1="300" x2="332" y2="318"/>
+      <line x1="300" y1="170" x2="262" y2="300"/>
+      <line x1="190" y1="250" x2="232" y2="172"/>
+      <line x1="232" y1="172" x2="300" y2="170"/>
+      <line x1="332" y1="318" x2="372" y2="232"/>
+    </g>
+
+    <!-- network nodes (teal + gold), pulsing -->
+    <g>
+      <circle cx="300" cy="170" r="13" fill="url(#teal)">
+        <animate attributeName="r" values="13;16;13" dur="2.2s" repeatCount="indefinite"/></circle>
+      <circle cx="372" cy="232" r="14" fill="url(#teal)">
+        <animate attributeName="r" values="14;17;14" dur="2.6s" begin="0.3s" repeatCount="indefinite"/></circle>
+      <circle cx="262" cy="300" r="15" fill="url(#teal)">
+        <animate attributeName="r" values="15;18;15" dur="2.4s" begin="0.6s" repeatCount="indefinite"/></circle>
+      <circle cx="190" cy="250" r="13" fill="#f3d488">
+        <animate attributeName="r" values="13;15;13" dur="2.8s" begin="0.2s" repeatCount="indefinite"/></circle>
+      <circle cx="232" cy="172" r="8"  fill="#f3d488"/>
+      <circle cx="332" cy="318" r="9"  fill="#f3d488"/>
+      <circle cx="210" cy="330" r="9"  fill="url(#teal)">
+        <animate attributeName="r" values="9;11;9" dur="2.1s" begin="0.4s" repeatCount="indefinite"/></circle>
+    </g>
+
+    <!-- ===== gold ring (3D tube) ===== -->
+    <use href="#ring" stroke="#7c5410" stroke-width="30" stroke-linecap="round"/>
+    <use href="#ring" stroke="url(#gold)" stroke-width="24" stroke-linecap="round"/>
+    <use href="#ring" stroke="url(#goldHi)" stroke-width="7" stroke-linecap="round" opacity="0.9"
+         transform="translate(0,-4)"/>
+
+    <!-- travelling sparkle along the ring -->
+    <circle r="7" fill="#fffbe8" filter="url(#soft)">
+      <animateMotion dur="3.2s" repeatCount="indefinite" rotate="0">
+        <mpath href="#ring"/>
+      </animateMotion>
+      <animate attributeName="opacity" values="0;1;1;0" dur="3.2s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- ===== LTS wordmark ===== -->
+    <text x="256" y="332" text-anchor="middle"
+      font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="86"
+      letter-spacing="2" fill="url(#ltsGrad)" stroke="#8a5f15" stroke-width="1.3">LTS</text>
+
+    <!-- ===== teal screw base ===== -->
+    <g fill="url(#teal)" stroke="#093e3b" stroke-width="3">
+      <rect x="206" y="356" width="100" height="22" rx="11"/>
+      <rect x="212" y="384" width="88"  height="22" rx="11"/>
+      <rect x="219" y="412" width="74"  height="22" rx="11"/>
+      <path d="M232 440 h48 a8 8 0 0 1 8 8 v6 a32 28 0 0 1 -64 0 v-6 a8 8 0 0 1 8 -8 z"/>
+    </g>
+    <!-- specular glint on base -->
+    <rect x="214" y="360" width="34" height="6" rx="3" fill="#bfeae6" opacity="0.7">
+      <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2.5s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+</svg>

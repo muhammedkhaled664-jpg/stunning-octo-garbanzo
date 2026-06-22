@@ -16,7 +16,7 @@ window.CLIENT_CONFIG = {
 
   brandName:   "LogiSync",
   tagline:     "Operations Authentication",
-  logoFile:    "logo.png",
+  logoFile:    "logo.svg",   // animated 3D mark; logo.png is the static favicon/PWA icon
   reportTitle: "LogiSync Weekly Report",
   exportPrefix:"LogiSync",
 

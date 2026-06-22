@@ -9,7 +9,7 @@
    throttled connection toast informs the user.
    ===================================================================== */
 
-const CACHE = 'logisync-shell-v1';
+const CACHE = 'logisync-shell-v2';
 
 // The static shell — same-origin assets that make up the UI.
 const SHELL = [
@@ -17,6 +17,7 @@ const SHELL = [
   './index.html',
   './config.js',
   './tailwind.build.css',
+  './logo.svg',
   './logo.png',
   './manifest.webmanifest'
 ];

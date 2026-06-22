@@ -6,7 +6,7 @@ window.CLIENT_CONFIG = {
 
   brandName:   "LogiSync",
   tagline:     "Operations Authentication",
-  logoFile:    "logo.png",
+  logoFile:    "logo.svg",
   reportTitle: "LogiSync Weekly Report",
   exportPrefix:"LogiSync",
 

@@ -1753,23 +1753,22 @@
         }
 
         async function startAux(agent, type) {
-            // One open aux per agent — guard against double taps
+            // One open aux per agent — guard against double taps client-side too
             if (_openAuxByAgent()[agent]) { toast(agent + ' is already on an auxiliary.', 'error'); return; }
-            const { error } = await _client.from('aux_logs').insert({
-                agent, aux_type: type, start_time: new Date().toISOString(),
-                logged_by: currentUser || null
-            });
-            if (error) { connectionToast('Could not start aux — try again.'); return; }
+            // Writes go through a PIN-verified SECURITY DEFINER RPC (same model
+            // as tasks / weekly numbers / coaching) — the table is read-only to
+            // the client. See SECURITY_NOTES.md.
+            const { error } = await _client.rpc('secure_start_aux', { p_pin: currentPin, p_agent: agent, p_aux_type: type });
+            if (error) { alert(error.message || 'Could not start aux — try again.'); return; }
             toast(`${agent} → ${type}`, 'success');
             await loadAux();
         }
 
         async function stopAux(id) {
             const row = auxData.find(r => r.id === id);
-            const endIso = new Date().toISOString();
-            const dur = row ? Math.round((new Date(endIso) - new Date(row.start_time)) / 1000) : null;
-            const { error } = await _client.from('aux_logs').update({ end_time: endIso, duration_seconds: dur }).eq('id', id);
-            if (error) { connectionToast('Could not stop aux — try again.'); return; }
+            const { error } = await _client.rpc('secure_stop_aux', { p_pin: currentPin, p_id: id });
+            if (error) { alert(error.message || 'Could not stop aux — try again.'); return; }
+            const dur = row ? Math.round((Date.now() - new Date(row.start_time)) / 1000) : null;
             toast('Aux stopped' + (dur != null ? ` (${_fmtDur(dur)})` : ''), 'success');
             await loadAux();
         }
@@ -1777,8 +1776,8 @@
         async function deleteAux(id) {
             const ok = await confirmDialog('Delete this aux log entry?', { confirmText: 'Delete', danger: true });
             if (!ok) return;
-            const { error } = await _client.from('aux_logs').delete().eq('id', id);
-            if (error) { connectionToast('Could not delete entry.'); return; }
+            const { error } = await _client.rpc('secure_delete_aux', { p_pin: currentPin, p_id: id });
+            if (error) { alert(error.message || 'Could not delete entry.'); return; }
             await loadAux();
         }
 

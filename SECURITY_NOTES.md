@@ -28,8 +28,20 @@ and disciplinary data (warnings, terminations, follow-ups).
 ### Impact
 
 - Disclosure of internal QA scores and **employee disciplinary records**.
-- Potential write/delete exposure if `INSERT`/`UPDATE`/`DELETE` policies are
-  similarly permissive (verify each one).
+
+### What is *not* affected: writes
+
+Writes are **not** done directly against the tables. The client has no
+`INSERT`/`UPDATE`/`DELETE` RLS policies, so direct writes with the anon key are
+rejected. Instead every mutation goes through a `SECURITY DEFINER` RPC
+(`secure_add_task`, `secure_save_weekly`, `secure_save_coaching`,
+`secure_start_aux`, …) that verifies the caller's PIN via `_auth_user(pin)`
+before touching a table. This is a sound pattern: the database, not the UI, is
+the gatekeeper for writes. The AUX Tracker follows the same model
+(`secure_start_aux` / `secure_stop_aux` / `secure_delete_aux`); `aux_logs` is
+read-only to the client.
+
+The remaining gap is therefore **reads**, addressed below.
 
 ### Recommended remediation
 
@@ -63,12 +75,11 @@ and disciplinary data (warnings, terminations, follow-ups).
 
 ### `aux_logs` table
 
-The AUX Tracker writes to a new `public.aux_logs` table. Because the browser
-uses the publishable (anon) key, that table was created with permissive anon
-policies for `select/insert/update/delete` so the live start/stop tracker works.
-This is the **same trade-off** as the rest of the app — anyone with the public
-key can read/write aux activity. When you move to real Supabase Auth (see
-above), replace those anon policies with `to authenticated` equivalents.
+The AUX Tracker uses a `public.aux_logs` table. It is **read-only to the client**
+(anon `SELECT` only) and all writes go through PIN-verified `SECURITY DEFINER`
+RPCs — the same model as the rest of the app (see "What is not affected: writes"
+above). Like the other tables, its rows are publicly *readable* with the anon
+key, so tighten the read policy when you move to real auth.
 
 ## 2. Secrets in `config.js`
 

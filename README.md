@@ -12,6 +12,8 @@ backed by [Supabase](https://supabase.com). The entire UI is a static app shell
 - **Live operations feed** — log tasks, priorities, and active "threats".
 - **Weekly numbers** — per-agent QA pass rates across 5 weeks with monthly reports.
 - **Coaching records** — documentation, warnings, and follow-ups per agent.
+- **AUX Tracker** — live auxiliary status per agent (Restroom, Break, Away Phone
+  call, Away Order, Prayer) with start/stop timers, daily totals, and exports.
 - **Exports** — every data view exports to **Excel (.xlsx)** *and* **CSV**
   (CSV buttons sit next to each Excel button).
 - **Import** — tasks and coaching records from Excel/CSV, with downloadable templates.
@@ -66,5 +68,6 @@ PWA / service worker activates.
 
 ## Backend (Supabase)
 
-The app expects three tables: `tasks`, `weekly_numbers`, and `coaching_records`.
-Tighten their RLS policies before production — see `SECURITY_NOTES.md`.
+The app expects these tables: `tasks`, `weekly_numbers`, `coaching_records`, and
+`aux_logs` (used by the AUX Tracker). Tighten their RLS policies before
+production — see `SECURITY_NOTES.md`.

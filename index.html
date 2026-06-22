@@ -273,6 +273,7 @@
                     <button onclick="openNumbers()" id="tabNumbers" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-table-cells w-4"></i> Weekly Numbers</button>
                     <button onclick="openCoaching()" id="tabCoaching" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-chalkboard-user w-4"></i> Coaching</button>
                     <button onclick="openOverview()" id="tabOverview" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-layer-group w-4"></i> Team Totals</button>
+                    <button onclick="openAux()" id="tabAux" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-stopwatch w-4"></i> AUX Tracker</button>
                     <div class="mt-6 flex flex-col gap-2 pt-6 border-t border-gray-200 dark:border-borderline">
                         <button onclick="copyEOD()" id="eodBtn" class="text-xs text-deepTeal-600 dark:text-deepTeal-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-teal-200 hidden"><i class="fa-solid fa-clipboard mr-2"></i>Copy Weekly</button>
                         <button onclick="exportToExcel()" id="excelBtn" class="text-xs text-green-600 dark:text-green-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-green-200 hidden"><i class="fa-solid fa-file-excel mr-2"></i>Export .XLSX</button>
@@ -425,6 +426,50 @@
                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">Coaching summary</h3>
                 <div id="ov-coaching" class="bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm p-5"></div>
             </div>
+
+            <!-- ===================== AUX TRACKER ===================== -->
+            <div id="aux-view" class="hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5 border-b border-gray-200 dark:border-borderline pb-4">
+                    <div class="flex items-center gap-3">
+                        <button onclick="goBoard()" class="h-[40px] px-3 rounded-xl bg-white dark:bg-panel border border-gray-200 dark:border-borderline text-gray-600 dark:text-gray-300 text-sm font-medium shadow-sm hover:bg-gray-50 dark:hover:bg-base transition-colors"><i class="fa-solid fa-arrow-left mr-1.5"></i>Back</button>
+                        <div>
+                            <h2 class="text-lg font-black text-gray-800 dark:text-white tracking-tight"><i class="fa-solid fa-stopwatch text-deepTeal-500 mr-2"></i>AUX Tracker</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Live auxiliary status per agent — start one aux, stop it to log the duration.</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input id="auxDay" type="date" class="h-[44px] bg-white dark:bg-panel border border-gray-200 dark:border-borderline px-3 rounded-xl text-sm outline-none text-gray-700 dark:text-gray-200 font-medium shadow-sm focus:ring-2 focus:ring-deepTeal-500/50 cursor-pointer">
+                        <button onclick="exportAuxExcel()" class="h-[44px] text-xs text-green-600 dark:text-green-500 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-green-200"><i class="fa-solid fa-file-excel mr-1.5"></i>Export</button>
+                        <button onclick="exportAuxCSV()" class="h-[44px] text-xs text-teal-600 dark:text-teal-400 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-teal-500/30"><i class="fa-solid fa-file-csv mr-1.5"></i>CSV</button>
+                    </div>
+                </div>
+
+                <!-- Live agent cards -->
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">Live status</h3>
+                <div id="aux-live" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6"></div>
+
+                <!-- Daily totals by aux type -->
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">Totals for the day</h3>
+                <div id="aux-totals" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6"></div>
+
+                <!-- Log -->
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">Aux log</h3>
+                <div class="overflow-x-auto bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm">
+                    <table class="w-full text-sm min-w-[720px]">
+                        <thead>
+                            <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-borderline">
+                                <th class="py-3 px-4 font-semibold">Agent</th>
+                                <th class="py-3 px-3 font-semibold">Auxiliary</th>
+                                <th class="py-3 px-3 font-semibold">Start</th>
+                                <th class="py-3 px-3 font-semibold">End</th>
+                                <th class="py-3 px-3 font-semibold">Duration</th>
+                                <th class="py-3 px-3 font-semibold text-right">&nbsp;</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aux-body"></tbody>
+                    </table>
+                </div>
+            </div>
         </main>
 
         <!-- Coaching add/edit modal -->
@@ -477,6 +522,7 @@
         <button onclick="openNumbers();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-table-cells w-5 text-deepTeal-500"></i> Weekly Numbers</button>
         <button onclick="openCoaching();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-chalkboard-user w-5 text-deepTeal-500"></i> Coaching</button>
         <button onclick="openOverview();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-layer-group w-5 text-deepTeal-500"></i> Team Totals</button>
+        <button onclick="openAux();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-stopwatch w-5 text-deepTeal-500"></i> AUX Tracker</button>
         <button id="leadershipBtn" onclick="openLeadership();closeReportsMenu()" class="hidden text-left text-sm px-3 py-2.5 rounded-lg text-white bg-gradient-to-r from-deepTeal-600 to-deepTeal-500 hover:from-deepTeal-500 hover:to-deepTeal-400 mt-1 font-semibold shadow-sm"><i class="fa-solid fa-tv w-5"></i> Leadership Mode</button>
     </div>
 
@@ -1345,10 +1391,12 @@
             document.getElementById('numbers-view').classList.add('hidden');
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
+            document.getElementById('aux-view').classList.add('hidden');
+            _stopAuxTicker();
             document.getElementById('stats-panel').classList.remove('hidden');
             document.getElementById('input-zone').classList.remove('hidden');
             document.getElementById('board-area').classList.remove('hidden');
-            ['tabNumbers','tabCoaching','tabOverview'].forEach(id => {
+            ['tabNumbers','tabCoaching','tabOverview','tabAux'].forEach(id => {
                 const e = document.getElementById(id);
                 e.classList.remove('bg-white','dark:bg-panel','text-deepTeal-600','border-gray-200','shadow-sm');
                 e.classList.add('text-gray-600','border-transparent');
@@ -1379,6 +1427,8 @@
         function openNumbers() {
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
+            document.getElementById('aux-view').classList.add('hidden');
+            _stopAuxTicker();
             document.getElementById('numbers-view').classList.remove('hidden');
             _fade(document.getElementById('numbers-view'));
             _activateReportTab('tabNumbers', 'mobileTabReports');
@@ -1553,6 +1603,8 @@
         async function openCoaching() {
             document.getElementById('numbers-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
+            document.getElementById('aux-view').classList.add('hidden');
+            _stopAuxTicker();
             document.getElementById('coaching-view').classList.remove('hidden');
             _fade(document.getElementById('coaching-view'));
             _activateReportTab('tabCoaching', 'mobileTabReports');
@@ -1564,6 +1616,8 @@
         async function openOverview() {
             document.getElementById('numbers-view').classList.add('hidden');
             document.getElementById('coaching-view').classList.add('hidden');
+            document.getElementById('aux-view').classList.add('hidden');
+            _stopAuxTicker();
             document.getElementById('overview-view').classList.remove('hidden');
             _fade(document.getElementById('overview-view'));
             _activateReportTab('tabOverview', 'mobileTabReports');
@@ -1571,6 +1625,188 @@
             if (!m.value) { const d = new Date(); m.value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
             m.onchange = loadOverview;
             await loadOverview();
+        }
+
+        /* ===================== AUX TRACKER ===================== */
+        const AUX_TYPES = ['Restroom', 'Break', 'Away Phone call', 'Away Order', 'Prayer'];
+        const AUX_ICONS = {
+            'Restroom': 'fa-restroom', 'Break': 'fa-mug-hot', 'Away Phone call': 'fa-phone',
+            'Away Order': 'fa-cart-shopping', 'Prayer': 'fa-hands-praying'
+        };
+        let auxData = [];          // rows for the selected day
+        let _auxTicker = null;     // interval that updates running timers
+
+        function _stopAuxTicker() { if (_auxTicker) { clearInterval(_auxTicker); _auxTicker = null; } }
+
+        function _fmtDur(secs) {
+            secs = Math.max(0, Math.floor(secs || 0));
+            const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+            return (h ? h + 'h ' : '') + (h || m ? m + 'm ' : '') + s + 's';
+        }
+        function _auxSeconds(r) {
+            const end = r.end_time ? new Date(r.end_time) : new Date();
+            return (end - new Date(r.start_time)) / 1000;
+        }
+        function _auxRoster() { return CFG.agents || []; }
+
+        async function openAux() {
+            document.getElementById('numbers-view').classList.add('hidden');
+            document.getElementById('coaching-view').classList.add('hidden');
+            document.getElementById('overview-view').classList.add('hidden');
+            document.getElementById('aux-view').classList.remove('hidden');
+            _fade(document.getElementById('aux-view'));
+            _activateReportTab('tabAux', 'mobileTabReports');
+            const d = document.getElementById('auxDay');
+            if (!d.value) d.value = new Date().toISOString().slice(0, 10);
+            d.onchange = loadAux;
+            await loadAux();
+            // Live timers refresh once per second while the tab is open
+            _stopAuxTicker();
+            _auxTicker = setInterval(_tickAux, 1000);
+        }
+
+        async function loadAux() {
+            const day = document.getElementById('auxDay').value;
+            if (!day) return;
+            const start = new Date(day + 'T00:00:00');
+            const end = new Date(start.getTime() + 24 * 3600 * 1000);
+            // Include any still-open aux that started today
+            const { data, error } = await _client.from('aux_logs').select('*')
+                .gte('start_time', start.toISOString()).lt('start_time', end.toISOString())
+                .order('start_time', { ascending: false });
+            if (error) { connectionToast('Could not load aux logs.'); auxData = []; }
+            else auxData = data || [];
+            renderAux();
+        }
+
+        function _openAuxByAgent() {
+            const map = {};
+            auxData.forEach(r => { if (!r.end_time) map[r.agent] = r; });
+            return map;
+        }
+
+        function renderAux() {
+            const open = _openAuxByAgent();
+            const isToday = document.getElementById('auxDay').value === new Date().toISOString().slice(0, 10);
+
+            // ---- Live agent cards ----
+            const live = document.getElementById('aux-live');
+            live.innerHTML = _auxRoster().map(agent => {
+                const cur = open[agent];
+                if (cur) {
+                    return `<div class="bg-white dark:bg-panel rounded-xl border border-amber-300 dark:border-amber-500/40 shadow-sm p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-800 dark:text-white">${agent}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full"><i class="fa-solid ${AUX_ICONS[cur.aux_type] || 'fa-stopwatch'} mr-1"></i>${cur.aux_type}</span>
+                        </div>
+                        <div class="text-2xl font-black tabular-nums text-gray-800 dark:text-white mb-3" data-aux-timer="${cur.id}">${_fmtDur(_auxSeconds(cur))}</div>
+                        <button onclick="stopAux(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-flare hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-stop mr-1.5"></i>Stop</button>
+                    </div>`;
+                }
+                const btns = AUX_TYPES.map(t =>
+                    `<button onclick="startAux('${agent.replace(/'/g, "\\'")}','${t}')" ${isToday ? '' : 'disabled'} class="text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-gray-50 dark:bg-base border border-gray-200 dark:border-borderline text-gray-600 dark:text-gray-300 hover:bg-deepTeal-50 hover:text-deepTeal-600 dark:hover:bg-deepTeal-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"><i class="fa-solid ${AUX_ICONS[t]} mr-1"></i>${t}</button>`
+                ).join('');
+                return `<div class="bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="font-semibold text-gray-800 dark:text-white">${agent}</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Available</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">${btns}</div>
+                </div>`;
+            }).join('');
+
+            // ---- Totals by aux type ----
+            const totals = {}; AUX_TYPES.forEach(t => totals[t] = 0);
+            auxData.forEach(r => { if (AUX_TYPES.includes(r.aux_type)) totals[r.aux_type] += _auxSeconds(r); });
+            document.getElementById('aux-totals').innerHTML = AUX_TYPES.map(t =>
+                `<div class="bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm p-3 text-center">
+                    <div class="text-deepTeal-500 mb-1"><i class="fa-solid ${AUX_ICONS[t]}"></i></div>
+                    <div class="text-sm font-black text-gray-800 dark:text-white tabular-nums">${_fmtDur(totals[t])}</div>
+                    <div class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">${t}</div>
+                </div>`
+            ).join('');
+
+            // ---- Log table ----
+            const body = document.getElementById('aux-body');
+            if (!auxData.length) {
+                body.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-gray-400 dark:text-gray-500 text-sm">No auxiliary activity logged for this day.</td></tr>`;
+                return;
+            }
+            const tfmt = (iso) => iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+            body.innerHTML = auxData.map(r => `<tr class="border-b border-gray-100 dark:border-borderline/60">
+                <td class="py-2.5 px-4 font-medium text-gray-800 dark:text-gray-100">${r.agent}</td>
+                <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300"><i class="fa-solid ${AUX_ICONS[r.aux_type] || 'fa-stopwatch'} mr-1.5 text-deepTeal-500"></i>${r.aux_type}</td>
+                <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300 tabular-nums">${tfmt(r.start_time)}</td>
+                <td class="py-2.5 px-3 ${r.end_time ? 'text-gray-600 dark:text-gray-300' : 'text-amber-600 dark:text-amber-400 font-semibold'} tabular-nums">${r.end_time ? tfmt(r.end_time) : 'running…'}</td>
+                <td class="py-2.5 px-3 tabular-nums ${r.end_time ? 'text-gray-800 dark:text-gray-100' : 'text-amber-600 dark:text-amber-400'}" ${r.end_time ? '' : `data-aux-timer="${r.id}"`}>${_fmtDur(_auxSeconds(r))}</td>
+                <td class="py-2.5 px-3 text-right">${r.end_time ? `<button onclick="deleteAux(${r.id})" class="text-gray-400 hover:text-flare" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>` : `<button onclick="stopAux(${r.id})" class="text-xs font-semibold text-flare hover:text-red-600"><i class="fa-solid fa-stop mr-1"></i>Stop</button>`}</td>
+            </tr>`).join('');
+        }
+
+        // Update only the running timers in place (cheap, runs every second)
+        function _tickAux() {
+            const open = auxData.filter(r => !r.end_time);
+            if (!open.length) return;
+            open.forEach(r => {
+                document.querySelectorAll(`[data-aux-timer="${r.id}"]`).forEach(el => { el.textContent = _fmtDur(_auxSeconds(r)); });
+            });
+        }
+
+        async function startAux(agent, type) {
+            // One open aux per agent — guard against double taps
+            if (_openAuxByAgent()[agent]) { toast(agent + ' is already on an auxiliary.', 'error'); return; }
+            const { error } = await _client.from('aux_logs').insert({
+                agent, aux_type: type, start_time: new Date().toISOString(),
+                logged_by: currentUser || null
+            });
+            if (error) { connectionToast('Could not start aux — try again.'); return; }
+            toast(`${agent} → ${type}`, 'success');
+            await loadAux();
+        }
+
+        async function stopAux(id) {
+            const row = auxData.find(r => r.id === id);
+            const endIso = new Date().toISOString();
+            const dur = row ? Math.round((new Date(endIso) - new Date(row.start_time)) / 1000) : null;
+            const { error } = await _client.from('aux_logs').update({ end_time: endIso, duration_seconds: dur }).eq('id', id);
+            if (error) { connectionToast('Could not stop aux — try again.'); return; }
+            toast('Aux stopped' + (dur != null ? ` (${_fmtDur(dur)})` : ''), 'success');
+            await loadAux();
+        }
+
+        async function deleteAux(id) {
+            const ok = await confirmDialog('Delete this aux log entry?', { confirmText: 'Delete', danger: true });
+            if (!ok) return;
+            const { error } = await _client.from('aux_logs').delete().eq('id', id);
+            if (error) { connectionToast('Could not delete entry.'); return; }
+            await loadAux();
+        }
+
+        function _buildAuxRows() {
+            return auxData.map(r => ({
+                'Agent': r.agent,
+                'Auxiliary': r.aux_type,
+                'Date': new Date(r.start_time).toLocaleDateString(),
+                'Start': new Date(r.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                'End': r.end_time ? new Date(r.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'running',
+                'Duration': _fmtDur(_auxSeconds(r)),
+                'Duration (seconds)': Math.round(_auxSeconds(r)),
+                'Logged By': r.logged_by || ''
+            }));
+        }
+
+        async function exportAuxExcel() {
+            if (!auxData.length) { alert('No aux activity to export.'); return; }
+            await ensureXLSX();
+            const ws = window.XLSX.utils.json_to_sheet(_buildAuxRows());
+            const wb = window.XLSX.utils.book_new();
+            window.XLSX.utils.book_append_sheet(wb, ws, 'AUX');
+            window.XLSX.writeFile(wb, `${_exportPrefix()}_AUX_${document.getElementById('auxDay').value}.xlsx`);
+        }
+
+        function exportAuxCSV() {
+            if (!auxData.length) { alert('No aux activity to export.'); return; }
+            downloadCSV(_buildAuxRows(), `${_exportPrefix()}_AUX_${document.getElementById('auxDay').value}.csv`);
         }
 
         async function loadOverview() {

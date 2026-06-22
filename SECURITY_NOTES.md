@@ -61,6 +61,15 @@ and disciplinary data (warnings, terminations, follow-ups).
 > out**, so the cosmetic login flow was intentionally left as-is. Fixing the RLS
 > policies above is the real fix and is independent of the login UI.
 
+### `aux_logs` table
+
+The AUX Tracker writes to a new `public.aux_logs` table. Because the browser
+uses the publishable (anon) key, that table was created with permissive anon
+policies for `select/insert/update/delete` so the live start/stop tracker works.
+This is the **same trade-off** as the rest of the app — anyone with the public
+key can read/write aux activity. When you move to real Supabase Auth (see
+above), replace those anon policies with `to authenticated` equivalents.
+
 ## 2. Secrets in `config.js`
 
 `config.js` is git-ignored (`.gitignore`) and provided via `config.example.js`

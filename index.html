@@ -857,11 +857,19 @@
                     optionsHtml += `<option value="${uName}">${uName}</option>`;
                 });
                 mInput.innerHTML = optionsHtml;
-                mInput.value = currentUser; 
-                
-                if (isLeader) {
+                mInput.value = currentUser;
+
+                // Leaders and managers may delegate; agents are locked to themselves.
+                const canDelegate = isLeader || currentAccessLevel === 'manager';
+                if (canDelegate) {
                     mInput.disabled = false;
                     mInput.classList.remove('bg-gray-100', 'cursor-not-allowed', 'opacity-70');
+                } else {
+                    mInput.disabled = true;
+                    mInput.classList.add('bg-gray-100', 'cursor-not-allowed', 'opacity-70');
+                }
+
+                if (isLeader) {
                     document.getElementById('mobile-leader-controls').classList.remove('hidden');
                     document.getElementById('eodBtn').classList.remove('hidden');
                     document.getElementById('mobileEodBtn').classList.remove('hidden');
@@ -870,8 +878,6 @@
                     document.getElementById('leadershipBtn').classList.remove('hidden');
                     document.getElementById('adminBtn').classList.remove('hidden');
                 } else {
-                    mInput.disabled = true;
-                    mInput.classList.add('bg-gray-100', 'cursor-not-allowed', 'opacity-70');
                     document.getElementById('mobile-leader-controls').classList.add('hidden');
                     document.getElementById('eodBtn').classList.add('hidden');
                     document.getElementById('mobileEodBtn').classList.add('hidden');
@@ -980,6 +986,17 @@
                 visibleMembers = (data || []).filter(m => _norm(m.manager_name) !== _norm(currentUser));
             } catch (e) { visibleMembers = []; }
             renderTeamFilter();
+            populateAssignDropdown();
+        }
+
+        // Managers assign within their department: fill the "assign to" dropdown with members.
+        function populateAssignDropdown() {
+            if (currentAccessLevel !== 'manager') return;
+            const mInput = document.getElementById('mInput');
+            if (!mInput) return;
+            const uniq = [...new Set([currentUser, ...visibleMembers.map(m => m.manager_name)].filter(Boolean))];
+            mInput.innerHTML = uniq.map(n => `<option value="${n}">${n}</option>`).join('');
+            mInput.value = currentUser;
         }
 
         function renderTeamFilter() {

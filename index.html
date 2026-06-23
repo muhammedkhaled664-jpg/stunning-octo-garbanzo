@@ -1818,7 +1818,15 @@
             const end = r.end_time ? new Date(r.end_time) : new Date();
             return (end - new Date(r.start_time)) / 1000;
         }
-        function _auxRoster() { return CFG.agents || []; }
+        // Roster is the DB user hierarchy (same source as department/limit binding),
+        // so every tracked agent has a known department and aux limits actually apply.
+        // visibleMembers is scoped by the viewer (whole hierarchy for leaders, the
+        // department for managers); the viewer themselves is always included.
+        function _auxRoster() {
+            const names = [...visibleMembers.map(m => m.manager_name), currentUser].filter(Boolean);
+            const uniq = [...new Set(names)].sort((a, b) => a.localeCompare(b));
+            return uniq.length ? uniq : (CFG.agents || []);
+        }
 
         async function openAux() {
             document.getElementById('numbers-view').classList.add('hidden');

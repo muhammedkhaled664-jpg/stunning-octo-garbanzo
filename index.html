@@ -3487,7 +3487,19 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+                navigator.serviceWorker.register('sw.js').then((reg) => {
+                    // Check for a new deploy on load and periodically.
+                    reg.update();
+                    setInterval(() => reg.update(), 60 * 1000);
+                    // When a new service worker takes control, reload once so the
+                    // user always lands on the latest deploy (no manual cache clear).
+                    let reloaded = false;
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        if (reloaded) return;
+                        reloaded = true;
+                        window.location.reload();
+                    });
+                }).catch(err => console.warn('SW registration failed:', err));
             });
         }
     </script>

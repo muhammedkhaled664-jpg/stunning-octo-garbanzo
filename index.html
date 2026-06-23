@@ -999,14 +999,6 @@
                     document.getElementById('adminBtn').classList.add('hidden');
                 }
 
-                // AUX Tracker is a management tool — hidden from agents.
-                // Attendance (check in/out) is for everyone (PC-only enforced in the view).
-                const mgmtViews = currentAccessLevel === 'leader' || currentAccessLevel === 'manager';
-                ['tabAux','mTabAux'].forEach(id => {
-                    const e = document.getElementById(id);
-                    if (e) e.classList.toggle('hidden', !mgmtViews);
-                });
-
                 updateBadge();
                 loadTasks();
                 if(!liveSyncInterval) liveSyncInterval = setInterval(() => { if (!document.hidden) loadTasks(); }, 10000);
@@ -1993,7 +1985,6 @@
         }
 
         async function openAux() {
-            if (currentAccessLevel === 'agent') { toast('AUX Tracker is available to managers only.', 'error'); return; }
             document.getElementById('numbers-view').classList.add('hidden');
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');

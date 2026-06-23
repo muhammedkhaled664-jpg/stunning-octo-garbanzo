@@ -171,7 +171,7 @@
                 <button onclick="toggleTheme()" class="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-panel transition-colors" title="Toggle Theme"><i class="fa-solid fa-moon"></i></button>
                 <span id="name-badge" class="hidden sm:inline px-2.5 py-1.5 bg-gray-100 dark:bg-panel text-[11px] rounded-lg text-gray-600 dark:text-gray-300 font-semibold border border-gray-200 dark:border-borderline uppercase">AGENT</span>
                 <span id="user-badge" class="px-2.5 py-1.5 bg-teal-50 dark:bg-deepTeal-500/10 text-[11px] rounded-lg text-deepTeal-600 dark:text-deepTeal-500 font-semibold border border-teal-100 dark:border-transparent">ROLE</span>
-                <button onclick="logout()" class="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-flare/10 transition-colors"><i class="fa-solid fa-power-off"></i></button>
+                <button onclick="logout()" class="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"><i class="fa-solid fa-power-off"></i></button>
             </div>
         </header>
 
@@ -699,9 +699,9 @@
         <button onclick="openNumbers();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-table-cells w-5 text-deepTeal-500"></i> Weekly Numbers</button>
         <button onclick="openCoaching();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-chalkboard-user w-5 text-deepTeal-500"></i> Coaching</button>
         <button onclick="openOverview();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-layer-group w-5 text-deepTeal-500"></i> Team Totals</button>
-        <button onclick="openAux();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-stopwatch w-5 text-deepTeal-500"></i> AUX Tracker</button>
+        <button id="mTabAux" onclick="openAux();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-stopwatch w-5 text-deepTeal-500"></i> AUX Tracker</button>
         <button onclick="openTraining();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-graduation-cap w-5 text-deepTeal-500"></i> Training</button>
-        <button onclick="openAttendance();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-clock-rotate-left w-5 text-deepTeal-500"></i> Attendance</button>
+        <button id="mTabAttendance" onclick="openAttendance();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-clock-rotate-left w-5 text-deepTeal-500"></i> Attendance</button>
         <button id="leadershipBtn" onclick="openLeadership();closeReportsMenu()" class="hidden text-left text-sm px-3 py-2.5 rounded-lg text-white bg-gradient-to-r from-deepTeal-600 to-deepTeal-500 hover:from-deepTeal-500 hover:to-deepTeal-400 mt-1 font-semibold shadow-sm"><i class="fa-solid fa-tv w-5"></i> Leadership Mode</button>
     </div>
 
@@ -994,6 +994,13 @@
                     document.getElementById('leadershipBtn').classList.add('hidden');
                     document.getElementById('adminBtn').classList.add('hidden');
                 }
+
+                // AUX Tracker + Attendance are management tools — hidden from agents.
+                const mgmtViews = currentAccessLevel === 'leader' || currentAccessLevel === 'manager';
+                ['tabAux','tabAttendance','mTabAux','mTabAttendance'].forEach(id => {
+                    const e = document.getElementById(id);
+                    if (e) e.classList.toggle('hidden', !mgmtViews);
+                });
 
                 updateBadge();
                 loadTasks();
@@ -1965,6 +1972,7 @@
         }
 
         async function openAux() {
+            if (currentAccessLevel === 'agent') { toast('AUX Tracker is available to managers only.', 'error'); return; }
             document.getElementById('numbers-view').classList.add('hidden');
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
@@ -2089,7 +2097,7 @@
             const overByAgent = {}; over.forEach(o => { overByAgent[_lc(o.agent)] = true; });
             const alerts = document.getElementById('aux-alerts');
             if (over.length) {
-                alerts.innerHTML = `<div class="bg-rose-50 dark:bg-flare/10 border border-rose-200 dark:border-flare/30 rounded-xl p-3">
+                alerts.innerHTML = `<div class="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-flare/30 rounded-xl p-3">
                     <p class="text-xs font-bold text-rose-700 dark:text-rose-300 mb-2"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Over department aux limit (${over.length})</p>
                     <div class="flex flex-wrap gap-2">${over.map(o => `<span class="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white dark:bg-panel border border-rose-200 dark:border-flare/30 text-rose-700 dark:text-rose-300"><i class="fa-solid ${AUX_ICONS[o.type] || 'fa-stopwatch'} mr-1"></i>${_esc(o.agent)} · ${_esc(o.type)} ${Math.round(o.used)}/${o.limit}m</span>`).join('')}</div>
                 </div>`;
@@ -2104,7 +2112,7 @@
                         <span class="font-semibold text-gray-800 dark:text-white">${agent}${overByAgent[_lc(agent)] ? ' <i class="fa-solid fa-triangle-exclamation text-rose-500 ml-1" title="Over aux limit"></i>' : ''}</span>
                         <span class="self-start max-w-full truncate text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full"><i class="fa-solid ${AUX_ICONS[cur.aux_type] || 'fa-stopwatch'} mr-1"></i>${cur.aux_type}</span>
                         <div class="text-3xl font-black tabular-nums text-gray-800 dark:text-white" data-aux-timer="${cur.id}">${_fmtDur(_auxSeconds(cur))}</div>
-                        <button onclick="stopAux(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-flare hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-stop mr-1.5"></i>Stop</button>
+                        <button onclick="stopAux(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-rose-500 hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-stop mr-1.5"></i>Stop</button>
                     </div>`;
                 }
                 const btns = AUX_TYPES.map(t =>
@@ -2143,7 +2151,7 @@
                 <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300 tabular-nums">${tfmt(r.start_time)}</td>
                 <td class="py-2.5 px-3 ${r.end_time ? 'text-gray-600 dark:text-gray-300' : 'text-amber-600 dark:text-amber-400 font-semibold'} tabular-nums">${r.end_time ? tfmt(r.end_time) : 'running…'}</td>
                 <td class="py-2.5 px-3 tabular-nums ${r.end_time ? 'text-gray-800 dark:text-gray-100' : 'text-amber-600 dark:text-amber-400'}" ${r.end_time ? '' : `data-aux-timer="${r.id}"`}>${_fmtDur(_auxSeconds(r))}</td>
-                <td class="py-2.5 px-3 text-right">${r.end_time ? `<button onclick="deleteAux(${r.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-flare/10 transition-colors" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>` : `<button onclick="stopAux(${r.id})" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-flare hover:bg-red-600 text-white shadow-sm transition-colors"><i class="fa-solid fa-stop"></i>Stop</button>`}</td>
+                <td class="py-2.5 px-3 text-right">${r.end_time ? `<button onclick="deleteAux(${r.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>` : `<button onclick="stopAux(${r.id})" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-red-600 text-white shadow-sm transition-colors"><i class="fa-solid fa-stop"></i>Stop</button>`}</td>
             </tr>`).join('');
         }
 
@@ -2323,7 +2331,7 @@
                         <span class="font-semibold text-gray-800 dark:text-white">${_esc(agent)}</span>
                         <span class="self-start max-w-full truncate text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full"><i class="fa-solid fa-graduation-cap mr-1"></i>${_esc(cur.topic)}</span>
                         <div class="text-3xl font-black tabular-nums text-gray-800 dark:text-white" data-trn-timer="${cur.id}">${_fmtDur(_auxSeconds(cur))}</div>
-                        <button onclick="stopTraining(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-flare hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-stop mr-1.5"></i>Stop</button>
+                        <button onclick="stopTraining(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-rose-500 hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-stop mr-1.5"></i>Stop</button>
                     </div>`;
                 }
                 return `<div class="bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm p-4">
@@ -2348,7 +2356,7 @@
                 <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300 tabular-nums">${tfmt(r.start_time)}</td>
                 <td class="py-2.5 px-3 ${r.end_time ? 'text-gray-600 dark:text-gray-300' : 'text-amber-600 dark:text-amber-400 font-semibold'} tabular-nums">${r.end_time ? tfmt(r.end_time) : 'running…'}</td>
                 <td class="py-2.5 px-3 tabular-nums ${r.end_time ? 'text-gray-800 dark:text-gray-100' : 'text-amber-600 dark:text-amber-400'}" ${r.end_time ? '' : `data-trn-timer="${r.id}"`}>${_fmtDur(_auxSeconds(r))}</td>
-                <td class="py-2.5 px-3 text-right">${r.end_time ? `<button onclick="deleteTraining(${r.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-flare/10 transition-colors" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>` : `<button onclick="stopTraining(${r.id})" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-flare hover:bg-red-600 text-white shadow-sm transition-colors"><i class="fa-solid fa-stop"></i>Stop</button>`}</td>
+                <td class="py-2.5 px-3 text-right">${r.end_time ? `<button onclick="deleteTraining(${r.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>` : `<button onclick="stopTraining(${r.id})" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-red-600 text-white shadow-sm transition-colors"><i class="fa-solid fa-stop"></i>Stop</button>`}</td>
             </tr>`).join('');
         }
 
@@ -2424,6 +2432,7 @@
         }
 
         async function openAttendance() {
+            if (currentAccessLevel === 'agent') { toast('Attendance is available to managers only.', 'error'); return; }
             document.getElementById('numbers-view').classList.add('hidden');
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
@@ -2507,7 +2516,7 @@
                         <span class="font-semibold text-gray-800 dark:text-white">${_esc(agent)}</span>
                         <span class="self-start text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full"><i class="fa-solid fa-circle-check mr-1"></i>In since ${tfmt(cur.check_in)}</span>
                         <div class="text-3xl font-black tabular-nums text-gray-800 dark:text-white" data-att-timer="${cur.id}">${_fmtDur(_attSeconds(cur))}</div>
-                        <button onclick="checkOut(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-flare hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-right-from-bracket mr-1.5"></i>Check out</button>
+                        <button onclick="checkOut(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-rose-500 hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-right-from-bracket mr-1.5"></i>Check out</button>
                     </div>`;
                 }
                 const btn = onPC
@@ -2534,7 +2543,7 @@
                 <td class="py-2.5 px-3 ${r.check_out ? 'text-gray-600 dark:text-gray-300' : 'text-emerald-600 dark:text-emerald-400 font-semibold'} tabular-nums">${r.check_out ? tfmt(r.check_out) : 'active…'}</td>
                 <td class="py-2.5 px-3 tabular-nums ${r.check_out ? 'text-gray-800 dark:text-gray-100' : 'text-emerald-600 dark:text-emerald-400'}" ${r.check_out ? '' : `data-att-timer="${r.id}"`}>${_fmtDur(_attSeconds(r))}</td>
                 <td class="py-2.5 px-3 text-gray-500 dark:text-gray-400 text-xs">${_esc(r.device || '—')}</td>
-                <td class="py-2.5 px-3 text-right">${r.check_out ? `<button onclick="deleteAttendance(${r.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-flare/10 transition-colors" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>` : `<button onclick="checkOut(${r.id})" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-flare hover:bg-red-600 text-white shadow-sm transition-colors"><i class="fa-solid fa-right-from-bracket"></i>Out</button>`}</td>
+                <td class="py-2.5 px-3 text-right">${r.check_out ? `<button onclick="deleteAttendance(${r.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>` : `<button onclick="checkOut(${r.id})" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-red-600 text-white shadow-sm transition-colors"><i class="fa-solid fa-right-from-bracket"></i>Out</button>`}</td>
             </tr>`).join('');
         }
 

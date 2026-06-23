@@ -2042,12 +2042,10 @@
             live.innerHTML = _auxRoster().filter(inPick).map(agent => {
                 const cur = open[agent];
                 if (cur) {
-                    return `<div class="bg-white dark:bg-panel rounded-xl border border-amber-300 dark:border-amber-500/40 shadow-sm p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-semibold text-gray-800 dark:text-white">${agent}${overByAgent[_lc(agent)] ? ' <i class="fa-solid fa-triangle-exclamation text-rose-500 ml-1" title="Over aux limit"></i>' : ''}</span>
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full"><i class="fa-solid ${AUX_ICONS[cur.aux_type] || 'fa-stopwatch'} mr-1"></i>${cur.aux_type}</span>
-                        </div>
-                        <div class="text-2xl font-black tabular-nums text-gray-800 dark:text-white mb-3" data-aux-timer="${cur.id}">${_fmtDur(_auxSeconds(cur))}</div>
+                    return `<div class="bg-white dark:bg-panel rounded-xl border border-amber-300 dark:border-amber-500/40 shadow-sm p-4 flex flex-col gap-2">
+                        <span class="font-semibold text-gray-800 dark:text-white">${agent}${overByAgent[_lc(agent)] ? ' <i class="fa-solid fa-triangle-exclamation text-rose-500 ml-1" title="Over aux limit"></i>' : ''}</span>
+                        <span class="self-start max-w-full truncate text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full"><i class="fa-solid ${AUX_ICONS[cur.aux_type] || 'fa-stopwatch'} mr-1"></i>${cur.aux_type}</span>
+                        <div class="text-3xl font-black tabular-nums text-gray-800 dark:text-white" data-aux-timer="${cur.id}">${_fmtDur(_auxSeconds(cur))}</div>
                         <button onclick="stopAux(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-flare hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-stop mr-1.5"></i>Stop</button>
                     </div>`;
                 }
@@ -2260,12 +2258,10 @@
             live.innerHTML = _auxRoster().filter(inPick).map(agent => {
                 const cur = open[agent];
                 if (cur) {
-                    return `<div class="bg-white dark:bg-panel rounded-xl border border-amber-300 dark:border-amber-500/40 shadow-sm p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-semibold text-gray-800 dark:text-white">${_esc(agent)}</span>
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full"><i class="fa-solid fa-graduation-cap mr-1"></i>${_esc(cur.topic)}</span>
-                        </div>
-                        <div class="text-2xl font-black tabular-nums text-gray-800 dark:text-white mb-3" data-trn-timer="${cur.id}">${_fmtDur(_auxSeconds(cur))}</div>
+                    return `<div class="bg-white dark:bg-panel rounded-xl border border-amber-300 dark:border-amber-500/40 shadow-sm p-4 flex flex-col gap-2">
+                        <span class="font-semibold text-gray-800 dark:text-white">${_esc(agent)}</span>
+                        <span class="self-start max-w-full truncate text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full"><i class="fa-solid fa-graduation-cap mr-1"></i>${_esc(cur.topic)}</span>
+                        <div class="text-3xl font-black tabular-nums text-gray-800 dark:text-white" data-trn-timer="${cur.id}">${_fmtDur(_auxSeconds(cur))}</div>
                         <button onclick="stopTraining(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-flare hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-stop mr-1.5"></i>Stop</button>
                     </div>`;
                 }

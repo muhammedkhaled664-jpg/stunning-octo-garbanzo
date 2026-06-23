@@ -1737,8 +1737,8 @@
             if (!monthEl.value) { const d = new Date(); monthEl.value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
             monthEl.onchange = () => { loadNumbers(); renderInsights(); };
 
-            // Every QA login gets a clickable bar of all scored agents
-            const roster = CFG.agents || [];
+            // Agent bar is scoped to what the viewer may see (agent → self only).
+            const roster = _visibleRoster();
             if (!window._numAgent || !roster.includes(window._numAgent)) window._numAgent = roster[0] || currentUser;
             document.getElementById('numAgentBar').classList.remove('hidden');
             renderNumAgentBar();
@@ -1748,7 +1748,7 @@
 
         function renderNumAgentBar() {
             const bar = document.getElementById('numAgentBar');
-            const names = CFG.agents || [];
+            const names = _visibleRoster();
             bar.innerHTML = names.map(n => {
                 const active = n === window._numAgent;
                 return `<button onclick="selectNumAgent('${n.replace(/'/g, "\\'")}')" class="whitespace-nowrap text-xs font-medium px-4 py-2 rounded-lg border transition-colors ${active ? 'bg-deepTeal-600 text-white border-deepTeal-600 shadow-sm' : 'bg-white dark:bg-panel text-gray-600 dark:text-gray-300 border-gray-200 dark:border-borderline hover:bg-gray-50 dark:hover:bg-base'}">${n}</button>`;
@@ -1762,7 +1762,7 @@
         }
 
         function currentNumbersAgent() {
-            return window._numAgent || (CFG.agents && CFG.agents[0]) || currentUser;
+            return window._numAgent || _visibleRoster()[0] || currentUser;
         }
 
         function goBoard() { setView('ACTIVE'); }
@@ -1888,7 +1888,8 @@
 
         function buildCoachingDropdowns() {
             const C = CFG.coaching || {};
-            const agents = [...new Set([...(CFG.agents || [])])];
+            // Scoped: agents pick only themselves, managers their dept, leaders all.
+            const agents = _visibleRoster();
             document.getElementById('cf-agent').innerHTML = _opts(agents, true);
             document.getElementById('cf-issue_tag').innerHTML = _opts(C.issueTags, true);
             document.getElementById('cf-team').innerHTML = _opts(C.teams, true);
@@ -1963,6 +1964,21 @@
             const names = [...visibleMembers.map(m => m.manager_name), currentUser].filter(Boolean);
             const uniq = [...new Set(names)].sort((a, b) => a.localeCompare(b));
             return uniq.length ? uniq : (CFG.agents || []);
+        }
+        // The roster the current viewer may see across ALL reports:
+        // agent -> just themselves, manager -> their department, leader -> everyone.
+        // (Alias of _auxRoster so every report shares one source of truth.)
+        function _visibleRoster() { return _auxRoster(); }
+        // Set of allowed lowercased names, or null when unrestricted (leaders).
+        function _visibleNameSet() {
+            if (currentAccessLevel === 'leader') return null;
+            return new Set(_visibleRoster().map(_lc));
+        }
+        // Filter any rows with an agent-name field down to what the viewer may see.
+        function _scopeByAgent(rows, key = 'agent') {
+            const allow = _visibleNameSet();
+            if (!allow) return rows || [];
+            return (rows || []).filter(r => allow.has(_lc(r[key])));
         }
 
         // Populate an agent <select> from the visible roster, keeping the current pick if still valid.
@@ -2782,8 +2798,11 @@
             const period = document.getElementById('ovMonth').value;
             if (!period) return;
             const target = Number(CFG.qaTarget) || 90;
-            const { wn, coach } = await _fetchMonth(period);
+            const fetched = await _fetchMonth(period);
+            const wn = _scopeByAgent(fetched.wn);
+            const coach = _scopeByAgent(fetched.coach);
             const { rows, tot, teamAvg } = _rollup(wn);
+            const rosterSize = _visibleRoster().length;
             const col = v => v>=target ? 'text-emerald-600 dark:text-emerald-400' : (v>=target-10 ? 'text-amber-600 dark:text-amber-500' : 'text-rose-600 dark:text-rose-400');
 
             const coachedSet = new Set(coach.map(c => c.agent).filter(Boolean));
@@ -2796,7 +2815,7 @@
             document.getElementById('ov-kpis').innerHTML =
                 kpi('Team Average', teamAvg.toFixed(1)+'%', col(teamAvg)) +
                 kpi('Calls Scored', tot.s) +
-                kpi('Agents Reported', `${rows.length}/${(CFG.agents||[]).length}`) +
+                kpi('Agents Reported', `${rows.length}/${rosterSize}`) +
                 kpi('Coaching Sessions', coach.length);
 
             document.getElementById('ov-body').innerHTML = rows.length ? rows.map(r => `<tr class="border-b border-gray-100 dark:border-borderline/50">
@@ -2813,7 +2832,7 @@
             const stat = (label, val, tone) => `<div class="flex-1 min-w-[120px] text-center"><p class="text-2xl font-bold ${tone||''}">${val}</p><p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">${label}</p></div>`;
             document.getElementById('ov-coaching').innerHTML = `<div class="flex flex-wrap gap-4 justify-around">
                 ${stat('Total Sessions', coach.length)}
-                ${stat('Agents Coached', `${coachedSet.size}/${(CFG.agents||[]).length}`)}
+                ${stat('Agents Coached', `${coachedSet.size}/${rosterSize}`)}
                 ${stat('Warnings', warnings, 'text-rose-600 dark:text-rose-400')}
                 ${stat('Need Follow-up', followups, 'text-amber-600 dark:text-amber-500')}
             </div>`;
@@ -2826,10 +2845,10 @@
             const gridc = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
             const tick = isDark ? '#94a3b8' : '#64748b';
 
-            // Trend — team average over the last 6 months
-            const { data } = await _client.from('weekly_numbers').select('period, scored_calls, pass_calls');
+            // Trend — average over the last 6 months, scoped to the viewer's roster
+            const { data } = await _client.from('weekly_numbers').select('agent, period, scored_calls, pass_calls');
             const byP = {};
-            (data || []).forEach(r => { const p = r.period; (byP[p] = byP[p] || { s:0, pa:0 }); byP[p].s += r.scored_calls||0; byP[p].pa += r.pass_calls||0; });
+            _scopeByAgent(data || []).forEach(r => { const p = r.period; (byP[p] = byP[p] || { s:0, pa:0 }); byP[p].s += r.scored_calls||0; byP[p].pa += r.pass_calls||0; });
             const periods = Object.keys(byP).sort().slice(-6);
             const trendVals = periods.map(p => byP[p].s > 0 ? +(byP[p].pa / byP[p].s * 100).toFixed(1) : 0);
             const labels = periods.map(p => { const [y,m] = p.split('-'); return new Date(y, m-1, 1).toLocaleDateString([], { month:'short', year:'2-digit' }); });
@@ -2860,7 +2879,8 @@
 
         async function loadCoaching() {
             const { data, error } = await _client.from('coaching_records').select('*').order('call_date', { ascending: false }).order('id', { ascending: false });
-            coachingData = (!error && data) ? data : [];
+            // Agents see only their own records; managers their department; leaders all.
+            coachingData = (!error && data) ? _scopeByAgent(data) : [];
             renderCoaching();
         }
 
@@ -3105,12 +3125,13 @@
             if (!period) { alert('Pick a month first.'); return; }
             const target = Number(CFG.qaTarget) || 90;
             const accent = CFG.accentColor || '#0d9488';
-            const roster = CFG.agents || [];
+            const roster = _visibleRoster();
 
-            // Pull the month's data
-            const { data: wn } = await _client.from('weekly_numbers').select('*').eq('period', period);
+            // Pull the month's data (scoped to the viewer's roster)
+            const { data: wnRaw } = await _client.from('weekly_numbers').select('*').eq('period', period);
+            const wn = _scopeByAgent(wnRaw || []);
             const { data: allCoach } = await _client.from('coaching_records').select('*');
-            const coach = (allCoach || []).filter(r => (r.call_date || '').slice(0,7) === period || (r.coaching_date || '').slice(0,7) === period);
+            const coach = _scopeByAgent((allCoach || []).filter(r => (r.call_date || '').slice(0,7) === period || (r.coaching_date || '').slice(0,7) === period));
 
             // Per-agent monthly rollup
             const rows = roster.map(agent => {
@@ -3213,7 +3234,7 @@
             return { wn: wn || [], coach };
         }
         function _rollup(wn) {
-            const roster = CFG.agents || [];
+            const roster = _visibleRoster();
             const rows = roster.map(agent => {
                 const recs = wn.filter(r => r.agent === agent);
                 const t = recs.reduce((s,r)=>s+(r.total_calls||0),0);
@@ -3431,13 +3452,15 @@
                 ins.push({ icon:'fa-trophy', tone:'good', text:`Top performer: ${top.agent} (${top.avg.toFixed(1)}%)` });
             }
 
-            const coachedSet = new Set(curD.coach.map(c => c.agent).filter(Boolean));
-            if (curD.coach.length) ins.push({ icon:'fa-chalkboard-user', tone:'info', text:`${coachedSet.size} of ${(CFG.agents||[]).length} agents coached • ${curD.coach.length} session${curD.coach.length!==1?'s':''}` });
+            const curCoach = _scopeByAgent(curD.coach);
+            const rosterNames = _visibleRoster();
+            const coachedSet = new Set(curCoach.map(c => c.agent).filter(Boolean));
+            if (curCoach.length) ins.push({ icon:'fa-chalkboard-user', tone:'info', text:`${coachedSet.size} of ${rosterNames.length} agents coached • ${curCoach.length} session${curCoach.length!==1?'s':''}` });
 
-            const followups = curD.coach.filter(c => /follow ?up/i.test(c.coaching_status || '')).length;
+            const followups = curCoach.filter(c => /follow ?up/i.test(c.coaching_status || '')).length;
             if (followups) ins.push({ icon:'fa-bell', tone:'warn', text:`${followups} coaching follow-up(s) need attention` });
 
-            const missing = (CFG.agents || []).filter(a => !cur.rows.find(r => r.agent === a));
+            const missing = rosterNames.filter(a => !cur.rows.find(r => r.agent === a));
             if (missing.length) ins.push({ icon:'fa-hourglass-half', tone:'info', text:`${missing.length} agent(s) with no numbers yet: ${missing.join(', ')}` });
 
             if (!ins.length) { box.innerHTML = ''; return; }

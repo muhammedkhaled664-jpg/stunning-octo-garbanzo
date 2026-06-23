@@ -9,7 +9,7 @@
    throttled connection toast informs the user.
    ===================================================================== */
 
-const CACHE = 'logisync-shell-v2';
+const CACHE = 'logisync-shell-v3';
 
 // The static shell — same-origin assets that make up the UI.
 const SHELL = [
@@ -51,8 +51,31 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Cache-first for the static shell, with a network fallback that also
-  // refreshes the cached copy when online.
+  // The HTML document (navigations + index.html) is served NETWORK-FIRST so a
+  // new deploy shows up immediately when online; the cache is only a fallback
+  // for offline. Without this, cache-first kept serving a stale UI one deploy
+  // behind.
+  const isHTML = req.mode === 'navigate' ||
+    (req.headers.get('accept') || '').includes('text/html') ||
+    url.pathname.endsWith('/') || url.pathname.endsWith('/index.html');
+
+  if (isHTML) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((cache) => cache.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req).then((c) => c || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Other static assets (CSS, images, manifest): stale-while-revalidate —
+  // fast from cache, refreshed in the background for next time.
   event.respondWith(
     caches.match(req).then((cached) => {
       const network = fetch(req)

@@ -287,6 +287,7 @@
                     <button onclick="openOverview()" id="tabOverview" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-layer-group w-4"></i> Team Totals</button>
                     <button onclick="openAux()" id="tabAux" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-stopwatch w-4"></i> AUX Tracker</button>
                     <button onclick="openTraining()" id="tabTraining" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-graduation-cap w-4"></i> Training</button>
+                    <button onclick="openAttendance()" id="tabAttendance" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-clock-rotate-left w-4"></i> Attendance</button>
                     <div class="mt-6 flex flex-col gap-2 pt-6 border-t border-gray-200 dark:border-borderline">
                         <button onclick="copyEOD()" id="eodBtn" class="text-xs text-deepTeal-600 dark:text-deepTeal-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-teal-200 hidden"><i class="fa-solid fa-clipboard mr-2"></i>Copy Weekly</button>
                         <button onclick="exportToExcel()" id="excelBtn" class="text-xs text-green-600 dark:text-green-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-green-200 hidden"><i class="fa-solid fa-file-excel mr-2"></i>Export .XLSX</button>
@@ -541,6 +542,52 @@
                     </table>
                 </div>
             </div>
+
+            <!-- ===================== ATTENDANCE (check in / out) ===================== -->
+            <div id="attendance-view" class="hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5 border-b border-gray-200 dark:border-borderline pb-4">
+                    <div class="flex items-center gap-3">
+                        <button onclick="goBoard()" class="h-[40px] px-3 rounded-xl bg-white dark:bg-panel border border-gray-200 dark:border-borderline text-gray-600 dark:text-gray-300 text-sm font-medium shadow-sm hover:bg-gray-50 dark:hover:bg-base transition-colors"><i class="fa-solid fa-arrow-left mr-1.5"></i>Back</button>
+                        <div>
+                            <h2 class="text-lg font-black text-gray-800 dark:text-white tracking-tight"><i class="fa-solid fa-clock-rotate-left text-deepTeal-500 mr-2"></i>Attendance</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Check in at shift start, check out at the end. <span class="font-semibold">Check-in is available on a computer only.</span></p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-1.5 h-[44px] bg-white dark:bg-panel border border-gray-200 dark:border-borderline px-2.5 rounded-xl shadow-sm">
+                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">From</span>
+                            <input id="attFrom" type="date" class="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer">
+                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 ml-1">To</span>
+                            <input id="attTo" type="date" class="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer">
+                        </div>
+                        <select id="attAgent" onchange="renderAttendance()" class="h-[44px] bg-white dark:bg-panel border border-gray-200 dark:border-borderline px-3 rounded-xl text-sm outline-none text-gray-700 dark:text-gray-200 font-medium shadow-sm focus:ring-2 focus:ring-deepTeal-500/50 cursor-pointer"><option value="">All people</option></select>
+                        <button onclick="exportAttendanceCSV()" class="h-[44px] text-xs text-teal-600 dark:text-teal-400 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-teal-500/30"><i class="fa-solid fa-file-csv mr-1.5"></i>CSV</button>
+                    </div>
+                </div>
+
+                <div id="att-mobile-note" class="hidden mb-4"></div>
+                <div id="att-agent-summary" class="mb-4"></div>
+
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">Live status</h3>
+                <div id="att-live" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6"></div>
+
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">Attendance log</h3>
+                <div class="overflow-x-auto bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm">
+                    <table class="w-full text-sm min-w-[720px]">
+                        <thead>
+                            <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-borderline">
+                                <th class="py-3 px-4 font-semibold">Person</th>
+                                <th class="py-3 px-3 font-semibold">Check in</th>
+                                <th class="py-3 px-3 font-semibold">Check out</th>
+                                <th class="py-3 px-3 font-semibold">Duration</th>
+                                <th class="py-3 px-3 font-semibold">Device</th>
+                                <th class="py-3 px-3 font-semibold text-right">&nbsp;</th>
+                            </tr>
+                        </thead>
+                        <tbody id="att-body"></tbody>
+                    </table>
+                </div>
+            </div>
         </main>
 
         <!-- ===================== ADMIN (leaders only) ===================== -->
@@ -654,6 +701,7 @@
         <button onclick="openOverview();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-layer-group w-5 text-deepTeal-500"></i> Team Totals</button>
         <button onclick="openAux();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-stopwatch w-5 text-deepTeal-500"></i> AUX Tracker</button>
         <button onclick="openTraining();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-graduation-cap w-5 text-deepTeal-500"></i> Training</button>
+        <button onclick="openAttendance();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-clock-rotate-left w-5 text-deepTeal-500"></i> Attendance</button>
         <button id="leadershipBtn" onclick="openLeadership();closeReportsMenu()" class="hidden text-left text-sm px-3 py-2.5 rounded-lg text-white bg-gradient-to-r from-deepTeal-600 to-deepTeal-500 hover:from-deepTeal-500 hover:to-deepTeal-400 mt-1 font-semibold shadow-sm"><i class="fa-solid fa-tv w-5"></i> Leadership Mode</button>
     </div>
 
@@ -1625,12 +1673,14 @@
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
+            document.getElementById('attendance-view').classList.add('hidden');
             _stopAuxTicker();
             _stopTrainTicker();
+            _stopAttTicker();
             document.getElementById('stats-panel').classList.remove('hidden');
             document.getElementById('input-zone').classList.remove('hidden');
             document.getElementById('board-area').classList.remove('hidden');
-            ['tabNumbers','tabCoaching','tabOverview','tabAux','tabTraining'].forEach(id => {
+            ['tabNumbers','tabCoaching','tabOverview','tabAux','tabTraining','tabAttendance'].forEach(id => {
                 const e = document.getElementById(id);
                 e.classList.remove('bg-white','dark:bg-panel','text-deepTeal-600','border-gray-200','shadow-sm');
                 e.classList.add('text-gray-600','border-transparent');
@@ -1663,8 +1713,10 @@
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
+            document.getElementById('attendance-view').classList.add('hidden');
             _stopAuxTicker();
             _stopTrainTicker();
+            _stopAttTicker();
             document.getElementById('numbers-view').classList.remove('hidden');
             _fade(document.getElementById('numbers-view'));
             _activateReportTab('tabNumbers', 'mobileTabReports');
@@ -1841,8 +1893,10 @@
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
+            document.getElementById('attendance-view').classList.add('hidden');
             _stopAuxTicker();
             _stopTrainTicker();
+            _stopAttTicker();
             document.getElementById('coaching-view').classList.remove('hidden');
             _fade(document.getElementById('coaching-view'));
             _activateReportTab('tabCoaching', 'mobileTabReports');
@@ -1856,8 +1910,10 @@
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
+            document.getElementById('attendance-view').classList.add('hidden');
             _stopAuxTicker();
             _stopTrainTicker();
+            _stopAttTicker();
             document.getElementById('overview-view').classList.remove('hidden');
             _fade(document.getElementById('overview-view'));
             _activateReportTab('tabOverview', 'mobileTabReports');
@@ -1913,7 +1969,9 @@
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
+            document.getElementById('attendance-view').classList.add('hidden');
             _stopTrainTicker();
+            _stopAttTicker();
             document.getElementById('aux-view').classList.remove('hidden');
             _fade(document.getElementById('aux-view'));
             _activateReportTab('tabAux', 'mobileTabReports');
@@ -2199,7 +2257,9 @@
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
+            document.getElementById('attendance-view').classList.add('hidden');
             _stopAuxTicker();
+            _stopAttTicker();
             document.getElementById('training-view').classList.remove('hidden');
             _fade(document.getElementById('training-view'));
             _activateReportTab('tabTraining', 'mobileTabReports');
@@ -2211,6 +2271,7 @@
             _fillAgentSelect('trnAgent', 'All people');
             await loadTraining();
             _stopTrainTicker();
+            _stopAttTicker();
             _trainTicker = setInterval(_tickTrain, 1000);
         }
 
@@ -2341,6 +2402,189 @@
             if (!trainingData.length) { alert('No training activity to export.'); return; }
             const f = document.getElementById('trnFrom').value, t = document.getElementById('trnTo').value || f;
             downloadCSV(_buildTrainRows(), `${_exportPrefix()}_Training_${f === t ? f : f + '_to_' + t}.csv`);
+        }
+
+        /* ===================== ATTENDANCE (check in / out) ===================== */
+        // Best-effort "PC only": touch-primary / known mobile UA => treat as not-a-computer.
+        function _isMobileDevice() {
+            try {
+                if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches && navigator.maxTouchPoints > 0) return true;
+                return /Mobi|Android|iPhone|iPad|iPod|Tablet|Silk|Kindle|BlackBerry|Opera Mini|IEMobile/i.test(navigator.userAgent || '');
+            } catch (_) { return false; }
+        }
+
+        let attendanceData = [];
+        let _attTicker = null;
+        function _stopAttTicker() { if (_attTicker) { clearInterval(_attTicker); _attTicker = null; } }
+
+        function _scopeAttRows(rows) {
+            if (currentAccessLevel === 'leader') return rows;
+            const allowed = new Set(_auxRoster().map(_lc));
+            return rows.filter(r => allowed.has(_lc(r.agent)));
+        }
+
+        async function openAttendance() {
+            document.getElementById('numbers-view').classList.add('hidden');
+            document.getElementById('coaching-view').classList.add('hidden');
+            document.getElementById('overview-view').classList.add('hidden');
+            document.getElementById('aux-view').classList.add('hidden');
+            document.getElementById('training-view').classList.add('hidden');
+            document.getElementById('attendance-view').classList.add('hidden');
+            _stopAuxTicker();
+            _stopTrainTicker();
+            _stopAttTicker();
+            document.getElementById('attendance-view').classList.remove('hidden');
+            _fade(document.getElementById('attendance-view'));
+            _activateReportTab('tabAttendance', 'mobileTabReports');
+            const today = new Date().toISOString().slice(0, 10);
+            const f = document.getElementById('attFrom'), t = document.getElementById('attTo');
+            if (!f.value) f.value = today;
+            if (!t.value) t.value = today;
+            f.onchange = loadAttendance; t.onchange = loadAttendance;
+            _fillAgentSelect('attAgent', 'All people');
+            // PC-only notice
+            const note = document.getElementById('att-mobile-note');
+            note.innerHTML = _isMobileDevice()
+                ? `<div class="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-3 text-xs font-medium text-amber-700 dark:text-amber-300"><i class="fa-solid fa-desktop mr-1.5"></i>Check-in is available on a computer only. You can still check out and view the log here.</div>`
+                : '';
+            note.classList.toggle('hidden', !_isMobileDevice());
+            await loadAttendance();
+            _stopAttTicker();
+            _attTicker = setInterval(_tickAtt, 1000);
+        }
+
+        async function loadAttendance() {
+            const from = document.getElementById('attFrom').value;
+            let to = document.getElementById('attTo').value;
+            if (!from) return;
+            if (!to || to < from) to = from;
+            const start = new Date(from + 'T00:00:00');
+            const end = new Date(new Date(to + 'T00:00:00').getTime() + 24 * 3600 * 1000);
+            const { data, error } = await _client.from('attendance_logs').select('*')
+                .gte('check_in', start.toISOString()).lt('check_in', end.toISOString())
+                .order('check_in', { ascending: false });
+            if (error) { connectionToast('Could not load attendance.'); attendanceData = []; }
+            else attendanceData = _scopeAttRows(data || []);
+            renderAttendance();
+        }
+
+        function _attSeconds(r) {
+            const end = r.check_out ? new Date(r.check_out) : new Date();
+            return (end - new Date(r.check_in)) / 1000;
+        }
+        function _openAttByAgent() {
+            const map = {};
+            attendanceData.forEach(r => { if (!r.check_out) map[r.agent] = r; });
+            return map;
+        }
+
+        function renderAttendance() {
+            const open = _openAttByAgent();
+            const today = new Date().toISOString().slice(0, 10);
+            const isToday = document.getElementById('attFrom').value <= today && today <= (document.getElementById('attTo').value || today);
+            const onPC = !_isMobileDevice();
+            const pick = document.getElementById('attAgent') ? document.getElementById('attAgent').value : '';
+            const inPick = (name) => !pick || _lc(name) === _lc(pick);
+            const viewRows = attendanceData.filter(r => inPick(r.agent));
+            const tfmt = (iso) => iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+
+            // Per-person summary
+            const sumBox = document.getElementById('att-agent-summary');
+            if (pick) {
+                let total = 0, shifts = 0;
+                viewRows.forEach(r => { total += _attSeconds(r); shifts++; });
+                sumBox.innerHTML = `<div class="bg-gradient-to-r from-deepTeal-50 to-emerald-50 dark:from-deepTeal-500/10 dark:to-emerald-500/10 border border-deepTeal-200 dark:border-deepTeal-500/30 rounded-xl p-4 flex items-center justify-between">
+                    <p class="text-sm font-bold text-deepTeal-800 dark:text-deepTeal-200"><i class="fa-solid fa-clock mr-1.5"></i>${_esc(pick)} · ${shifts} session${shifts === 1 ? '' : 's'} · total time <span class="tabular-nums">${_fmtDur(total)}</span></p>
+                </div>`;
+            } else { sumBox.innerHTML = ''; }
+
+            // Live cards
+            const live = document.getElementById('att-live');
+            live.innerHTML = _auxRoster().filter(inPick).map(agent => {
+                const cur = open[agent];
+                if (cur) {
+                    return `<div class="bg-white dark:bg-panel rounded-xl border border-emerald-300 dark:border-emerald-500/40 shadow-sm p-4 flex flex-col gap-2">
+                        <span class="font-semibold text-gray-800 dark:text-white">${_esc(agent)}</span>
+                        <span class="self-start text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full"><i class="fa-solid fa-circle-check mr-1"></i>In since ${tfmt(cur.check_in)}</span>
+                        <div class="text-3xl font-black tabular-nums text-gray-800 dark:text-white" data-att-timer="${cur.id}">${_fmtDur(_attSeconds(cur))}</div>
+                        <button onclick="checkOut(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-flare hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-right-from-bracket mr-1.5"></i>Check out</button>
+                    </div>`;
+                }
+                const btn = onPC
+                    ? `<button onclick="checkIn('${agent.replace(/'/g, "\\'")}')" ${isToday ? '' : 'disabled'} class="w-full text-xs font-semibold py-2.5 rounded-lg bg-deepTeal-600 hover:bg-deepTeal-500 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"><i class="fa-solid fa-right-to-bracket mr-1.5"></i>Check in</button>`
+                    : `<div class="w-full text-[11px] font-medium py-2.5 rounded-lg bg-gray-50 dark:bg-base border border-gray-200 dark:border-borderline text-gray-400 text-center"><i class="fa-solid fa-desktop mr-1.5"></i>Check in from a computer</div>`;
+                return `<div class="bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm p-4 flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-gray-800 dark:text-white">${_esc(agent)}</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wide text-gray-400">Not in</span>
+                    </div>
+                    ${btn}
+                </div>`;
+            }).join('');
+
+            // Log table
+            const body = document.getElementById('att-body');
+            if (!viewRows.length) {
+                body.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-gray-400 dark:text-gray-500 text-sm">No attendance for this selection.</td></tr>`;
+                return;
+            }
+            body.innerHTML = viewRows.map(r => `<tr class="border-b border-gray-100 dark:border-borderline/60">
+                <td class="py-2.5 px-4 font-medium text-gray-800 dark:text-gray-100">${_esc(r.agent)}</td>
+                <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300 tabular-nums">${tfmt(r.check_in)}</td>
+                <td class="py-2.5 px-3 ${r.check_out ? 'text-gray-600 dark:text-gray-300' : 'text-emerald-600 dark:text-emerald-400 font-semibold'} tabular-nums">${r.check_out ? tfmt(r.check_out) : 'active…'}</td>
+                <td class="py-2.5 px-3 tabular-nums ${r.check_out ? 'text-gray-800 dark:text-gray-100' : 'text-emerald-600 dark:text-emerald-400'}" ${r.check_out ? '' : `data-att-timer="${r.id}"`}>${_fmtDur(_attSeconds(r))}</td>
+                <td class="py-2.5 px-3 text-gray-500 dark:text-gray-400 text-xs">${_esc(r.device || '—')}</td>
+                <td class="py-2.5 px-3 text-right">${r.check_out ? `<button onclick="deleteAttendance(${r.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-flare/10 transition-colors" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>` : `<button onclick="checkOut(${r.id})" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-flare hover:bg-red-600 text-white shadow-sm transition-colors"><i class="fa-solid fa-right-from-bracket"></i>Out</button>`}</td>
+            </tr>`).join('');
+        }
+
+        function _tickAtt() {
+            attendanceData.filter(r => !r.check_out).forEach(r => {
+                document.querySelectorAll(`[data-att-timer="${r.id}"]`).forEach(el => { el.textContent = _fmtDur(_attSeconds(r)); });
+            });
+        }
+
+        async function checkIn(agent) {
+            if (_isMobileDevice()) { toast('Check-in is available on a computer only.', 'error'); return; }
+            if (_openAttByAgent()[agent]) { toast(agent + ' is already checked in.', 'error'); return; }
+            const { error } = await _client.rpc('secure_check_in', { p_pin: currentPin, p_agent: agent, p_device: 'desktop' });
+            if (error) { alert(error.message || 'Could not check in — try again.'); return; }
+            toast(`${agent} checked in`, 'success');
+            await loadAttendance();
+        }
+
+        async function checkOut(id) {
+            const { error } = await _client.rpc('secure_check_out', { p_pin: currentPin, p_id: id });
+            if (error) { alert(error.message || 'Could not check out — try again.'); return; }
+            toast('Checked out', 'success');
+            await loadAttendance();
+        }
+
+        async function deleteAttendance(id) {
+            const ok = await confirmDialog('Delete this attendance entry?', { confirmText: 'Delete', danger: true });
+            if (!ok) return;
+            const { error } = await _client.rpc('secure_delete_attendance', { p_pin: currentPin, p_id: id });
+            if (error) { alert(error.message || 'Could not delete entry.'); return; }
+            await loadAttendance();
+        }
+
+        function _buildAttRows() {
+            return attendanceData.map(r => ({
+                'Person': r.agent,
+                'Date': new Date(r.check_in).toLocaleDateString(),
+                'Check in': new Date(r.check_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                'Check out': r.check_out ? new Date(r.check_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'active',
+                'Duration': _fmtDur(_attSeconds(r)),
+                'Duration (minutes)': Math.round(_attSeconds(r) / 60),
+                'Device': r.device || '',
+                'Logged By': r.logged_by || ''
+            }));
+        }
+
+        function exportAttendanceCSV() {
+            if (!attendanceData.length) { alert('No attendance to export.'); return; }
+            const f = document.getElementById('attFrom').value, t = document.getElementById('attTo').value || f;
+            downloadCSV(_buildAttRows(), `${_exportPrefix()}_Attendance_${f === t ? f : f + '_to_' + t}.csv`);
         }
 
         /* ===================== ADMIN (leaders only) ===================== */

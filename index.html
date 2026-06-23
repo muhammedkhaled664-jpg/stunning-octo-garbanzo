@@ -269,6 +269,10 @@
 
             <div id="board-area" class="flex flex-col md:flex-row gap-6 items-start">
                 <div class="hidden md:flex w-56 shrink-0 flex-col gap-1">
+                    <div id="team-filter" class="hidden flex-col gap-1 mb-4 pb-4 border-b border-gray-200 dark:border-borderline">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 px-3 mb-2"><i class="fa-solid fa-users-rectangle mr-1.5"></i><span id="team-filter-label">Team</span></p>
+                        <div id="team-filter-list" class="flex flex-col gap-1 max-h-72 overflow-y-auto scrollbar-hide"></div>
+                    </div>
                     <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 px-3 mb-2">Reporting</p>
                     <button onclick="openNumbers()" id="tabNumbers" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-table-cells w-4"></i> Weekly Numbers</button>
                     <button onclick="openCoaching()" id="tabCoaching" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-chalkboard-user w-4"></i> Coaching</button>
@@ -700,6 +704,10 @@
         let currentUser = null;
         let currentDepartment = null;
         let currentIsLeader = false;
+        let currentAccessLevel = 'agent';   // 'leader' | 'manager' | 'agent'
+        let currentEmail = null;
+        let visibleMembers = [];            // [{manager_name, department, access_level}]
+        let taskScopeMember = null;         // when set, board shows only this member's tasks
         let liveSyncInterval = null;
         let doughnutChartInstance = null;
         let currentPin = null;
@@ -749,8 +757,13 @@
                 currentDepartment = (data[0].department || 'General').trim() || 'General';
                 currentPin = pin;
                 currentIsLeader = data[0].is_leader === true;
+                currentEmail = data[0].email || null;
+                currentAccessLevel = currentIsLeader ? 'leader' : (data[0].access_level || 'agent');
 
                 const isLeader = currentIsLeader;
+
+                taskScopeMember = null;
+                loadVisibleMembers();   // builds the left-sidebar team filter (managers/leaders)
 
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-app').style.display = 'flex';
@@ -813,6 +826,8 @@
 
         function logout() {
             currentUser = null; currentDepartment = null; currentPin = null; currentIsLeader = false;
+            currentAccessLevel = 'agent'; currentEmail = null; visibleMembers = []; taskScopeMember = null;
+            const tf = document.getElementById('team-filter'); if (tf) tf.classList.add('hidden');
             document.getElementById('usernameInput').value = '';
             document.getElementById('pinInput').value = '';
             document.getElementById('login-screen').style.display = 'block'; 
@@ -861,6 +876,72 @@
             loadTasks();
         }
 
+        // ---- Hierarchy / task scoping ----
+        const _lc = s => (s || '').toString().trim().toLowerCase();
+
+        function applyTaskScope(rows) {
+            const me = _lc(currentUser);
+            const dept = _lc(currentDepartment);
+            let scoped;
+            if (currentAccessLevel === 'leader') {
+                scoped = rows;
+            } else if (currentAccessLevel === 'manager') {
+                scoped = rows.filter(t => _lc(t.department) === dept);
+            } else {
+                // agent: only tasks assigned to / created by them
+                scoped = rows.filter(t => {
+                    const m = _lc(t.manager);
+                    return m && (m === me || m.includes(me) || me.includes(m));
+                });
+            }
+            if (taskScopeMember) {
+                const sel = _lc(taskScopeMember);
+                scoped = scoped.filter(t => _lc(t.manager) === sel);
+            }
+            return scoped;
+        }
+
+        async function loadVisibleMembers() {
+            const wrap = document.getElementById('team-filter');
+            // Agents have no team to filter — hide the panel for them
+            if (currentAccessLevel === 'agent') { if (wrap) wrap.classList.add('hidden'); visibleMembers = []; return; }
+            try {
+                const { data, error } = await _client.rpc('visible_members', { p_pin: currentPin });
+                if (error) throw error;
+                visibleMembers = (data || []).filter(m => _norm(m.manager_name) !== _norm(currentUser));
+            } catch (e) { visibleMembers = []; }
+            renderTeamFilter();
+        }
+
+        function renderTeamFilter() {
+            const wrap = document.getElementById('team-filter');
+            const list = document.getElementById('team-filter-list');
+            if (!wrap || !list) return;
+            if (currentAccessLevel === 'agent' || !visibleMembers.length) { wrap.classList.add('hidden'); return; }
+            wrap.classList.remove('hidden');
+            document.getElementById('team-filter-label').textContent =
+                currentAccessLevel === 'leader' ? 'Everyone' : (currentDepartment + ' team');
+
+            const item = (label, key, icon) => {
+                const active = (taskScopeMember || '') === (key || '');
+                return `<button onclick="selectTaskMember(${key === null ? 'null' : `'${String(key).replace(/'/g, "\\'")}'`})"
+                    class="flex items-center gap-2.5 text-left py-2 px-3 rounded-lg font-medium text-sm transition-all border ${active
+                        ? 'bg-deepTeal-600 text-white border-deepTeal-600 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-300 border-transparent hover:bg-white dark:hover:bg-panel'}">
+                    <i class="fa-solid ${icon} w-4 text-xs ${active ? 'text-white' : 'text-gray-400'}"></i>${label}</button>`;
+            };
+            let html = item(currentAccessLevel === 'leader' ? 'All tasks' : 'Whole team', null, 'fa-layer-group');
+            html += visibleMembers.map(m => item(m.manager_name, m.manager_name, 'fa-user')).join('');
+            list.innerHTML = html;
+        }
+
+        function selectTaskMember(name) {
+            taskScopeMember = name || null;
+            renderTeamFilter();
+            window._tasksSig = null;   // force re-render
+            loadTasks();
+        }
+
         async function loadTasks() {
             if(!currentDepartment) return;
 
@@ -883,16 +964,20 @@
                 grid.innerHTML = skeletonHtml.repeat(4);
             }
             
-            const { data, error } = await _client.from('tasks').select('*').order('id', { ascending: false });
-            if(error || !data) return;
+            const { data: allData, error } = await _client.from('tasks').select('*').order('id', { ascending: false });
+            if(error || !allData) return;
+
+            // ---- Hierarchy scope: leader = all, manager = own department,
+            //      agent = own tasks. An optional team-member selection narrows further.
+            const data = applyTaskScope(allData);
 
             // Skip all re-rendering if nothing actually changed (huge iOS perf win on polling)
-            const sig = currentView + '|' + currentFilter + '|' + data.map(t => `${t.id}:${t.status}:${t.has_flare?1:0}:${t.priority}:${(t.description||'').length}:${(t.briefing||'').length}`).join(',');
+            const sig = currentView + '|' + currentFilter + '|' + (taskScopeMember||'') + '|' + data.map(t => `${t.id}:${t.status}:${t.has_flare?1:0}:${t.priority}:${(t.description||'').length}:${(t.briefing||'').length}`).join(',');
             if (sig === window._tasksSig) return;
             window._tasksSig = sig;
 
             updateDashboardTelemetry(data);
-            
+
             const safeName = currentUser ? currentUser.trim().toLowerCase() : 'agent';
             let displayData = data.filter(t => t.status === currentView);
 

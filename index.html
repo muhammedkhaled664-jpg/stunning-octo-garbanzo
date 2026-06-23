@@ -193,7 +193,7 @@
                         <p class="text-[10px] uppercase tracking-wider text-white/70 mb-1">Active Now</p>
                         <p id="kpi-active" class="hero-num">0</p>
                     </div>
-                    <div class="grid grid-cols-2 gap-2.5 relative z-10">
+                    <div class="grid grid-cols-3 gap-2.5 relative z-10">
                         <div class="rounded-lg px-3 py-2" style="background:rgba(255,255,255,.13)">
                             <p class="text-[9px] uppercase tracking-wider text-white/70">Closed Today</p>
                             <p id="kpi-closed" class="text-xl font-bold">0</p>
@@ -201,6 +201,10 @@
                         <div class="rounded-lg px-3 py-2" style="background:rgba(255,255,255,.13)">
                             <p class="text-[9px] uppercase tracking-wider text-white/70">Critical</p>
                             <p id="kpi-critical" class="text-xl font-bold">0</p>
+                        </div>
+                        <div class="rounded-lg px-3 py-2" style="background:rgba(255,255,255,.13)" title="People currently on an auxiliary">
+                            <p class="text-[9px] uppercase tracking-wider text-white/70">Out Now</p>
+                            <p id="kpi-out" class="text-xl font-bold">0</p>
                         </div>
                     </div>
                 </div>
@@ -282,6 +286,7 @@
                     <button onclick="openCoaching()" id="tabCoaching" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-chalkboard-user w-4"></i> Coaching</button>
                     <button onclick="openOverview()" id="tabOverview" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-layer-group w-4"></i> Team Totals</button>
                     <button onclick="openAux()" id="tabAux" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-stopwatch w-4"></i> AUX Tracker</button>
+                    <button onclick="openTraining()" id="tabTraining" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-graduation-cap w-4"></i> Training</button>
                     <div class="mt-6 flex flex-col gap-2 pt-6 border-t border-gray-200 dark:border-borderline">
                         <button onclick="copyEOD()" id="eodBtn" class="text-xs text-deepTeal-600 dark:text-deepTeal-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-teal-200 hidden"><i class="fa-solid fa-clipboard mr-2"></i>Copy Weekly</button>
                         <button onclick="exportToExcel()" id="excelBtn" class="text-xs text-green-600 dark:text-green-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-green-200 hidden"><i class="fa-solid fa-file-excel mr-2"></i>Export .XLSX</button>
@@ -447,11 +452,20 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <input id="auxDay" type="date" class="h-[44px] bg-white dark:bg-panel border border-gray-200 dark:border-borderline px-3 rounded-xl text-sm outline-none text-gray-700 dark:text-gray-200 font-medium shadow-sm focus:ring-2 focus:ring-deepTeal-500/50 cursor-pointer">
+                        <div class="flex items-center gap-1.5 h-[44px] bg-white dark:bg-panel border border-gray-200 dark:border-borderline px-2.5 rounded-xl shadow-sm">
+                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">From</span>
+                            <input id="auxFrom" type="date" class="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer">
+                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 ml-1">To</span>
+                            <input id="auxTo" type="date" class="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer">
+                        </div>
+                        <select id="auxAgent" onchange="renderAux()" class="h-[44px] bg-white dark:bg-panel border border-gray-200 dark:border-borderline px-3 rounded-xl text-sm outline-none text-gray-700 dark:text-gray-200 font-medium shadow-sm focus:ring-2 focus:ring-deepTeal-500/50 cursor-pointer"><option value="">All agents</option></select>
                         <button onclick="exportAuxExcel()" class="h-[44px] text-xs text-green-600 dark:text-green-500 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-green-200"><i class="fa-solid fa-file-excel mr-1.5"></i>Export</button>
                         <button onclick="exportAuxCSV()" class="h-[44px] text-xs text-teal-600 dark:text-teal-400 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-teal-500/30"><i class="fa-solid fa-file-csv mr-1.5"></i>CSV</button>
                     </div>
                 </div>
+
+                <!-- Per-agent daily report (shown when a single agent is filtered) -->
+                <div id="aux-agent-summary" class="mb-4"></div>
 
                 <!-- Over-limit alerts (per department aux limits — report only) -->
                 <div id="aux-alerts" class="mb-4"></div>
@@ -479,6 +493,51 @@
                             </tr>
                         </thead>
                         <tbody id="aux-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===================== TRAINING TRACKER ===================== -->
+            <div id="training-view" class="hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5 border-b border-gray-200 dark:border-borderline pb-4">
+                    <div class="flex items-center gap-3">
+                        <button onclick="goBoard()" class="h-[40px] px-3 rounded-xl bg-white dark:bg-panel border border-gray-200 dark:border-borderline text-gray-600 dark:text-gray-300 text-sm font-medium shadow-sm hover:bg-gray-50 dark:hover:bg-base transition-colors"><i class="fa-solid fa-arrow-left mr-1.5"></i>Back</button>
+                        <div>
+                            <h2 class="text-lg font-black text-gray-800 dark:text-white tracking-tight"><i class="fa-solid fa-graduation-cap text-deepTeal-500 mr-2"></i>Training</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Live training status per person — start a session with a topic, stop it to log the duration.</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-1.5 h-[44px] bg-white dark:bg-panel border border-gray-200 dark:border-borderline px-2.5 rounded-xl shadow-sm">
+                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">From</span>
+                            <input id="trnFrom" type="date" class="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer">
+                            <span class="text-[11px] font-semibold uppercase tracking-wide text-gray-400 ml-1">To</span>
+                            <input id="trnTo" type="date" class="bg-transparent text-sm outline-none text-gray-700 dark:text-gray-200 font-medium cursor-pointer">
+                        </div>
+                        <select id="trnAgent" onchange="renderTraining()" class="h-[44px] bg-white dark:bg-panel border border-gray-200 dark:border-borderline px-3 rounded-xl text-sm outline-none text-gray-700 dark:text-gray-200 font-medium shadow-sm focus:ring-2 focus:ring-deepTeal-500/50 cursor-pointer"><option value="">All people</option></select>
+                        <button onclick="exportTrainingCSV()" class="h-[44px] text-xs text-teal-600 dark:text-teal-400 font-medium px-3 rounded-xl bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-teal-500/30"><i class="fa-solid fa-file-csv mr-1.5"></i>CSV</button>
+                    </div>
+                </div>
+
+                <div id="trn-agent-summary" class="mb-4"></div>
+
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">Live status</h3>
+                <div id="trn-live" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6"></div>
+
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">Training log</h3>
+                <div class="overflow-x-auto bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm">
+                    <table class="w-full text-sm min-w-[720px]">
+                        <thead>
+                            <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-borderline">
+                                <th class="py-3 px-4 font-semibold">Person</th>
+                                <th class="py-3 px-3 font-semibold">Topic</th>
+                                <th class="py-3 px-3 font-semibold">Start</th>
+                                <th class="py-3 px-3 font-semibold">End</th>
+                                <th class="py-3 px-3 font-semibold">Duration</th>
+                                <th class="py-3 px-3 font-semibold text-right">&nbsp;</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trn-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -594,6 +653,7 @@
         <button onclick="openCoaching();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-chalkboard-user w-5 text-deepTeal-500"></i> Coaching</button>
         <button onclick="openOverview();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-layer-group w-5 text-deepTeal-500"></i> Team Totals</button>
         <button onclick="openAux();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-stopwatch w-5 text-deepTeal-500"></i> AUX Tracker</button>
+        <button onclick="openTraining();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-graduation-cap w-5 text-deepTeal-500"></i> Training</button>
         <button id="leadershipBtn" onclick="openLeadership();closeReportsMenu()" class="hidden text-left text-sm px-3 py-2.5 rounded-lg text-white bg-gradient-to-r from-deepTeal-600 to-deepTeal-500 hover:from-deepTeal-500 hover:to-deepTeal-400 mt-1 font-semibold shadow-sm"><i class="fa-solid fa-tv w-5"></i> Leadership Mode</button>
     </div>
 
@@ -1105,6 +1165,7 @@
             setKpi('kpi-closed', closedToday);
             setKpi('kpi-active', activeData.length);
             setKpi('kpi-critical', criticalThreats);
+            refreshOutNow();
 
             const terminal = document.getElementById('terminal-feed');
             let feedHtml = '';
@@ -1563,11 +1624,13 @@
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
+            document.getElementById('training-view').classList.add('hidden');
             _stopAuxTicker();
+            _stopTrainTicker();
             document.getElementById('stats-panel').classList.remove('hidden');
             document.getElementById('input-zone').classList.remove('hidden');
             document.getElementById('board-area').classList.remove('hidden');
-            ['tabNumbers','tabCoaching','tabOverview','tabAux'].forEach(id => {
+            ['tabNumbers','tabCoaching','tabOverview','tabAux','tabTraining'].forEach(id => {
                 const e = document.getElementById(id);
                 e.classList.remove('bg-white','dark:bg-panel','text-deepTeal-600','border-gray-200','shadow-sm');
                 e.classList.add('text-gray-600','border-transparent');
@@ -1599,7 +1662,9 @@
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
+            document.getElementById('training-view').classList.add('hidden');
             _stopAuxTicker();
+            _stopTrainTicker();
             document.getElementById('numbers-view').classList.remove('hidden');
             _fade(document.getElementById('numbers-view'));
             _activateReportTab('tabNumbers', 'mobileTabReports');
@@ -1775,7 +1840,9 @@
             document.getElementById('numbers-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
+            document.getElementById('training-view').classList.add('hidden');
             _stopAuxTicker();
+            _stopTrainTicker();
             document.getElementById('coaching-view').classList.remove('hidden');
             _fade(document.getElementById('coaching-view'));
             _activateReportTab('tabCoaching', 'mobileTabReports');
@@ -1788,7 +1855,9 @@
             document.getElementById('numbers-view').classList.add('hidden');
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
+            document.getElementById('training-view').classList.add('hidden');
             _stopAuxTicker();
+            _stopTrainTicker();
             document.getElementById('overview-view').classList.remove('hidden');
             _fade(document.getElementById('overview-view'));
             _activateReportTab('tabOverview', 'mobileTabReports');
@@ -1828,16 +1897,32 @@
             return uniq.length ? uniq : (CFG.agents || []);
         }
 
+        // Populate an agent <select> from the visible roster, keeping the current pick if still valid.
+        function _fillAgentSelect(id, allLabel = 'All agents') {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            const prev = sel.value;
+            const roster = _auxRoster();
+            sel.innerHTML = `<option value="">${allLabel}</option>` +
+                roster.map(a => `<option value="${_esc(a)}">${_esc(a)}</option>`).join('');
+            if (roster.includes(prev)) sel.value = prev;
+        }
+
         async function openAux() {
             document.getElementById('numbers-view').classList.add('hidden');
             document.getElementById('coaching-view').classList.add('hidden');
             document.getElementById('overview-view').classList.add('hidden');
+            document.getElementById('training-view').classList.add('hidden');
+            _stopTrainTicker();
             document.getElementById('aux-view').classList.remove('hidden');
             _fade(document.getElementById('aux-view'));
             _activateReportTab('tabAux', 'mobileTabReports');
-            const d = document.getElementById('auxDay');
-            if (!d.value) d.value = new Date().toISOString().slice(0, 10);
-            d.onchange = loadAux;
+            const today = new Date().toISOString().slice(0, 10);
+            const f = document.getElementById('auxFrom'), t = document.getElementById('auxTo');
+            if (!f.value) f.value = today;
+            if (!t.value) t.value = today;
+            f.onchange = loadAux; t.onchange = loadAux;
+            _fillAgentSelect('auxAgent');
             await loadAux();
             // Live timers refresh once per second while the tab is open
             _stopAuxTicker();
@@ -1847,12 +1932,22 @@
         let auxLimits = {};    // `${deptLower}||${type}` -> minutes (0 = no limit)
         let memberDept = {};   // lower(name) -> department
 
+        // Agents/managers may only see their own roster's rows; leaders see everything.
+        // The live cards were already roster-scoped, but the log table & totals read the
+        // raw day query — so scope the rows here too.
+        function _scopeAuxRows(rows) {
+            if (currentAccessLevel === 'leader') return rows;
+            const allowed = new Set(_auxRoster().map(_lc));
+            return rows.filter(r => allowed.has(_lc(r.agent)));
+        }
+
         async function loadAux() {
-            const day = document.getElementById('auxDay').value;
-            if (!day) return;
-            const start = new Date(day + 'T00:00:00');
-            const end = new Date(start.getTime() + 24 * 3600 * 1000);
-            // Include any still-open aux that started today
+            const from = document.getElementById('auxFrom').value;
+            let to = document.getElementById('auxTo').value;
+            if (!from) return;
+            if (!to || to < from) to = from;
+            const start = new Date(from + 'T00:00:00');
+            const end = new Date(new Date(to + 'T00:00:00').getTime() + 24 * 3600 * 1000);
             const [logs, lim] = await Promise.all([
                 _client.from('aux_logs').select('*')
                     .gte('start_time', start.toISOString()).lt('start_time', end.toISOString())
@@ -1860,7 +1955,7 @@
                 _client.from('department_aux_limits').select('*')
             ]);
             if (logs.error) { connectionToast('Could not load aux logs.'); auxData = []; }
-            else auxData = logs.data || [];
+            else auxData = _scopeAuxRows(logs.data || []);
 
             auxLimits = {};
             (lim.data || []).forEach(r => { auxLimits[_lc(r.department) + '||' + r.aux_type] = r.daily_limit_minutes; });
@@ -1905,7 +2000,31 @@
 
         function renderAux() {
             const open = _openAuxByAgent();
-            const isToday = document.getElementById('auxDay').value === new Date().toISOString().slice(0, 10);
+            // Starting an aux always happens "now", so the start buttons are live only
+            // when today falls within the selected range.
+            const today = new Date().toISOString().slice(0, 10);
+            const isToday = document.getElementById('auxFrom').value <= today && today <= (document.getElementById('auxTo').value || today);
+            const pick = document.getElementById('auxAgent') ? document.getElementById('auxAgent').value : '';
+            const inPick = (name) => !pick || _lc(name) === _lc(pick);
+            const viewRows = auxData.filter(r => inPick(r.agent));
+
+            // ---- Per-agent daily report (#2): minutes per type + total for the picked agent ----
+            const sumBox = document.getElementById('aux-agent-summary');
+            if (pick) {
+                const perType = {}; AUX_TYPES.forEach(t => perType[t] = 0);
+                let total = 0;
+                viewRows.forEach(r => { if (AUX_TYPES.includes(r.aux_type)) { perType[r.aux_type] += _auxSeconds(r); total += _auxSeconds(r); } });
+                const rangeLbl = document.getElementById('auxFrom').value === (document.getElementById('auxTo').value || document.getElementById('auxFrom').value)
+                    ? document.getElementById('auxFrom').value
+                    : `${document.getElementById('auxFrom').value} → ${document.getElementById('auxTo').value}`;
+                sumBox.innerHTML = `<div class="bg-gradient-to-r from-deepTeal-50 to-emerald-50 dark:from-deepTeal-500/10 dark:to-emerald-500/10 border border-deepTeal-200 dark:border-deepTeal-500/30 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-sm font-bold text-deepTeal-800 dark:text-deepTeal-200"><i class="fa-solid fa-user-clock mr-1.5"></i>${_esc(pick)} · total aux <span class="tabular-nums">${_fmtDur(total)}</span></p>
+                        <span class="text-[11px] text-gray-500 dark:text-gray-400">${rangeLbl}</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">${AUX_TYPES.map(t => `<div class="bg-white dark:bg-panel rounded-lg border border-gray-200 dark:border-borderline p-2.5 text-center"><div class="text-deepTeal-500 mb-0.5"><i class="fa-solid ${AUX_ICONS[t]}"></i></div><div class="text-xs font-black text-gray-800 dark:text-white tabular-nums">${Math.round(perType[t] / 60)}m</div><div class="text-[10px] text-gray-500 dark:text-gray-400">${t}</div></div>`).join('')}</div>
+                </div>`;
+            } else { sumBox.innerHTML = ''; }
 
             // ---- Over-limit alerts (per department aux limits — report only) ----
             const over = _auxOverLimits();
@@ -1920,7 +2039,7 @@
 
             // ---- Live agent cards ----
             const live = document.getElementById('aux-live');
-            live.innerHTML = _auxRoster().map(agent => {
+            live.innerHTML = _auxRoster().filter(inPick).map(agent => {
                 const cur = open[agent];
                 if (cur) {
                     return `<div class="bg-white dark:bg-panel rounded-xl border border-amber-300 dark:border-amber-500/40 shadow-sm p-4">
@@ -1946,7 +2065,7 @@
 
             // ---- Totals by aux type ----
             const totals = {}; AUX_TYPES.forEach(t => totals[t] = 0);
-            auxData.forEach(r => { if (AUX_TYPES.includes(r.aux_type)) totals[r.aux_type] += _auxSeconds(r); });
+            viewRows.forEach(r => { if (AUX_TYPES.includes(r.aux_type)) totals[r.aux_type] += _auxSeconds(r); });
             document.getElementById('aux-totals').innerHTML = AUX_TYPES.map(t =>
                 `<div class="bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm p-3 text-center">
                     <div class="text-deepTeal-500 mb-1"><i class="fa-solid ${AUX_ICONS[t]}"></i></div>
@@ -1957,12 +2076,12 @@
 
             // ---- Log table ----
             const body = document.getElementById('aux-body');
-            if (!auxData.length) {
-                body.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-gray-400 dark:text-gray-500 text-sm">No auxiliary activity logged for this day.</td></tr>`;
+            if (!viewRows.length) {
+                body.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-gray-400 dark:text-gray-500 text-sm">No auxiliary activity for this selection.</td></tr>`;
                 return;
             }
             const tfmt = (iso) => iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
-            body.innerHTML = auxData.map(r => `<tr class="border-b border-gray-100 dark:border-borderline/60">
+            body.innerHTML = viewRows.map(r => `<tr class="border-b border-gray-100 dark:border-borderline/60">
                 <td class="py-2.5 px-4 font-medium text-gray-800 dark:text-gray-100">${r.agent}</td>
                 <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300"><i class="fa-solid ${AUX_ICONS[r.aux_type] || 'fa-stopwatch'} mr-1.5 text-deepTeal-500"></i>${r.aux_type}</td>
                 <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300 tabular-nums">${tfmt(r.start_time)}</td>
@@ -1991,6 +2110,7 @@
             if (error) { alert(error.message || 'Could not start aux — try again.'); return; }
             toast(`${agent} → ${type}`, 'success');
             await loadAux();
+            refreshOutNow();
         }
 
         async function stopAux(id) {
@@ -2000,6 +2120,7 @@
             const dur = row ? Math.round((Date.now() - new Date(row.start_time)) / 1000) : null;
             toast('Aux stopped' + (dur != null ? ` (${_fmtDur(dur)})` : ''), 'success');
             await loadAux();
+            refreshOutNow();
         }
 
         async function deleteAux(id) {
@@ -2038,12 +2159,192 @@
             const ws = window.XLSX.utils.json_to_sheet(_buildAuxRows());
             const wb = window.XLSX.utils.book_new();
             window.XLSX.utils.book_append_sheet(wb, ws, 'AUX');
-            window.XLSX.writeFile(wb, `${_exportPrefix()}_AUX_${document.getElementById('auxDay').value}.xlsx`);
+            window.XLSX.writeFile(wb, `${_exportPrefix()}_AUX_${_auxRangeTag()}.xlsx`);
+        }
+
+        function _auxRangeTag() {
+            const f = document.getElementById('auxFrom').value, t = document.getElementById('auxTo').value || f;
+            return f === t ? f : `${f}_to_${t}`;
         }
 
         function exportAuxCSV() {
             if (!auxData.length) { alert('No aux activity to export.'); return; }
-            downloadCSV(_buildAuxRows(), `${_exportPrefix()}_AUX_${document.getElementById('auxDay').value}.csv`);
+            downloadCSV(_buildAuxRows(), `${_exportPrefix()}_AUX_${_auxRangeTag()}.csv`);
+        }
+
+        /* ===================== "OUT NOW" TELEMETRY (#1) ===================== */
+        // Count of people currently on an auxiliary, scoped to what the viewer may see.
+        async function refreshOutNow() {
+            const el = document.getElementById('kpi-out');
+            if (!el || !_client) return;
+            try {
+                const { data, error } = await _client.from('aux_logs').select('agent,end_time').is('end_time', null);
+                if (error) return;
+                const rows = _scopeAuxRows(data || []);
+                setKpi('kpi-out', rows.length);
+            } catch (_) { /* non-fatal */ }
+        }
+
+        /* ===================== TRAINING TRACKER (#3) ===================== */
+        let trainingData = [];
+        let _trainTicker = null;
+        function _stopTrainTicker() { if (_trainTicker) { clearInterval(_trainTicker); _trainTicker = null; } }
+
+        function _scopeTrainRows(rows) {
+            if (currentAccessLevel === 'leader') return rows;
+            const allowed = new Set(_auxRoster().map(_lc));
+            return rows.filter(r => allowed.has(_lc(r.agent)));
+        }
+
+        async function openTraining() {
+            document.getElementById('numbers-view').classList.add('hidden');
+            document.getElementById('coaching-view').classList.add('hidden');
+            document.getElementById('overview-view').classList.add('hidden');
+            document.getElementById('aux-view').classList.add('hidden');
+            _stopAuxTicker();
+            document.getElementById('training-view').classList.remove('hidden');
+            _fade(document.getElementById('training-view'));
+            _activateReportTab('tabTraining', 'mobileTabReports');
+            const today = new Date().toISOString().slice(0, 10);
+            const f = document.getElementById('trnFrom'), t = document.getElementById('trnTo');
+            if (!f.value) f.value = today;
+            if (!t.value) t.value = today;
+            f.onchange = loadTraining; t.onchange = loadTraining;
+            _fillAgentSelect('trnAgent', 'All people');
+            await loadTraining();
+            _stopTrainTicker();
+            _trainTicker = setInterval(_tickTrain, 1000);
+        }
+
+        async function loadTraining() {
+            const from = document.getElementById('trnFrom').value;
+            let to = document.getElementById('trnTo').value;
+            if (!from) return;
+            if (!to || to < from) to = from;
+            const start = new Date(from + 'T00:00:00');
+            const end = new Date(new Date(to + 'T00:00:00').getTime() + 24 * 3600 * 1000);
+            const { data, error } = await _client.from('training_logs').select('*')
+                .gte('start_time', start.toISOString()).lt('start_time', end.toISOString())
+                .order('start_time', { ascending: false });
+            if (error) { connectionToast('Could not load training logs.'); trainingData = []; }
+            else trainingData = _scopeTrainRows(data || []);
+            renderTraining();
+        }
+
+        function _openTrainByAgent() {
+            const map = {};
+            trainingData.forEach(r => { if (!r.end_time) map[r.agent] = r; });
+            return map;
+        }
+
+        function renderTraining() {
+            const open = _openTrainByAgent();
+            const today = new Date().toISOString().slice(0, 10);
+            const isToday = document.getElementById('trnFrom').value <= today && today <= (document.getElementById('trnTo').value || today);
+            const pick = document.getElementById('trnAgent') ? document.getElementById('trnAgent').value : '';
+            const inPick = (name) => !pick || _lc(name) === _lc(pick);
+            const viewRows = trainingData.filter(r => inPick(r.agent));
+
+            // Per-person summary
+            const sumBox = document.getElementById('trn-agent-summary');
+            if (pick) {
+                let total = 0, sessions = 0;
+                viewRows.forEach(r => { total += _auxSeconds(r); sessions++; });
+                sumBox.innerHTML = `<div class="bg-gradient-to-r from-deepTeal-50 to-emerald-50 dark:from-deepTeal-500/10 dark:to-emerald-500/10 border border-deepTeal-200 dark:border-deepTeal-500/30 rounded-xl p-4 flex items-center justify-between">
+                    <p class="text-sm font-bold text-deepTeal-800 dark:text-deepTeal-200"><i class="fa-solid fa-graduation-cap mr-1.5"></i>${_esc(pick)} · ${sessions} session${sessions === 1 ? '' : 's'} · total <span class="tabular-nums">${_fmtDur(total)}</span></p>
+                </div>`;
+            } else { sumBox.innerHTML = ''; }
+
+            // Live cards
+            const live = document.getElementById('trn-live');
+            live.innerHTML = _auxRoster().filter(inPick).map(agent => {
+                const cur = open[agent];
+                if (cur) {
+                    return `<div class="bg-white dark:bg-panel rounded-xl border border-amber-300 dark:border-amber-500/40 shadow-sm p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-800 dark:text-white">${_esc(agent)}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full"><i class="fa-solid fa-graduation-cap mr-1"></i>${_esc(cur.topic)}</span>
+                        </div>
+                        <div class="text-2xl font-black tabular-nums text-gray-800 dark:text-white mb-3" data-trn-timer="${cur.id}">${_fmtDur(_auxSeconds(cur))}</div>
+                        <button onclick="stopTraining(${cur.id})" class="w-full text-xs font-semibold py-2.5 rounded-lg bg-flare hover:bg-red-600 text-white transition-colors"><i class="fa-solid fa-stop mr-1.5"></i>Stop</button>
+                    </div>`;
+                }
+                return `<div class="bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="font-semibold text-gray-800 dark:text-white">${_esc(agent)}</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Available</span>
+                    </div>
+                    <button onclick="startTraining('${agent.replace(/'/g, "\\'")}')" ${isToday ? '' : 'disabled'} class="w-full text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-gray-50 dark:bg-base border border-gray-200 dark:border-borderline text-gray-600 dark:text-gray-300 hover:bg-deepTeal-50 hover:text-deepTeal-600 dark:hover:bg-deepTeal-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"><i class="fa-solid fa-play mr-1"></i>Start training</button>
+                </div>`;
+            }).join('');
+
+            // Log table
+            const body = document.getElementById('trn-body');
+            if (!viewRows.length) {
+                body.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-gray-400 dark:text-gray-500 text-sm">No training logged for this selection.</td></tr>`;
+                return;
+            }
+            const tfmt = (iso) => iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+            body.innerHTML = viewRows.map(r => `<tr class="border-b border-gray-100 dark:border-borderline/60">
+                <td class="py-2.5 px-4 font-medium text-gray-800 dark:text-gray-100">${_esc(r.agent)}</td>
+                <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300"><i class="fa-solid fa-graduation-cap mr-1.5 text-deepTeal-500"></i>${_esc(r.topic)}</td>
+                <td class="py-2.5 px-3 text-gray-600 dark:text-gray-300 tabular-nums">${tfmt(r.start_time)}</td>
+                <td class="py-2.5 px-3 ${r.end_time ? 'text-gray-600 dark:text-gray-300' : 'text-amber-600 dark:text-amber-400 font-semibold'} tabular-nums">${r.end_time ? tfmt(r.end_time) : 'running…'}</td>
+                <td class="py-2.5 px-3 tabular-nums ${r.end_time ? 'text-gray-800 dark:text-gray-100' : 'text-amber-600 dark:text-amber-400'}" ${r.end_time ? '' : `data-trn-timer="${r.id}"`}>${_fmtDur(_auxSeconds(r))}</td>
+                <td class="py-2.5 px-3 text-right">${r.end_time ? `<button onclick="deleteTraining(${r.id})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-flare hover:bg-rose-50 dark:hover:bg-flare/10 transition-colors" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>` : `<button onclick="stopTraining(${r.id})" class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-flare hover:bg-red-600 text-white shadow-sm transition-colors"><i class="fa-solid fa-stop"></i>Stop</button>`}</td>
+            </tr>`).join('');
+        }
+
+        function _tickTrain() {
+            trainingData.filter(r => !r.end_time).forEach(r => {
+                document.querySelectorAll(`[data-trn-timer="${r.id}"]`).forEach(el => { el.textContent = _fmtDur(_auxSeconds(r)); });
+            });
+        }
+
+        async function startTraining(agent) {
+            if (_openTrainByAgent()[agent]) { toast(agent + ' is already in a training session.', 'error'); return; }
+            const topic = (window.prompt(`Training topic for ${agent}:`, '') || '').trim();
+            if (!topic) return;
+            const { error } = await _client.rpc('secure_start_training', { p_pin: currentPin, p_agent: agent, p_topic: topic });
+            if (error) { alert(error.message || 'Could not start training — try again.'); return; }
+            toast(`${agent} → ${topic}`, 'success');
+            await loadTraining();
+        }
+
+        async function stopTraining(id) {
+            const row = trainingData.find(r => r.id === id);
+            const { error } = await _client.rpc('secure_stop_training', { p_pin: currentPin, p_id: id });
+            if (error) { alert(error.message || 'Could not stop training — try again.'); return; }
+            const dur = row ? Math.round((Date.now() - new Date(row.start_time)) / 1000) : null;
+            toast('Training stopped' + (dur != null ? ` (${_fmtDur(dur)})` : ''), 'success');
+            await loadTraining();
+        }
+
+        async function deleteTraining(id) {
+            const ok = await confirmDialog('Delete this training log entry?', { confirmText: 'Delete', danger: true });
+            if (!ok) return;
+            const { error } = await _client.rpc('secure_delete_training', { p_pin: currentPin, p_id: id });
+            if (error) { alert(error.message || 'Could not delete entry.'); return; }
+            await loadTraining();
+        }
+
+        function _buildTrainRows() {
+            return trainingData.map(r => ({
+                'Person': r.agent,
+                'Topic': r.topic,
+                'Date': new Date(r.start_time).toLocaleDateString(),
+                'Start': new Date(r.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                'End': r.end_time ? new Date(r.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'running',
+                'Duration': _fmtDur(_auxSeconds(r)),
+                'Duration (minutes)': Math.round(_auxSeconds(r) / 60),
+                'Logged By': r.logged_by || ''
+            }));
+        }
+
+        function exportTrainingCSV() {
+            if (!trainingData.length) { alert('No training activity to export.'); return; }
+            const f = document.getElementById('trnFrom').value, t = document.getElementById('trnTo').value || f;
+            downloadCSV(_buildTrainRows(), `${_exportPrefix()}_Training_${f === t ? f : f + '_to_' + t}.csv`);
         }
 
         /* ===================== ADMIN (leaders only) ===================== */

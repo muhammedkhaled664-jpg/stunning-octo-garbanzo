@@ -13,7 +13,14 @@ backed by [Supabase](https://supabase.com). The entire UI is a static app shell
 - **Weekly numbers** — per-agent QA pass rates across 5 weeks with monthly reports.
 - **Coaching records** — documentation, warnings, and follow-ups per agent.
 - **AUX Tracker** — live auxiliary status per agent (Restroom, Break, Away Phone
-  call, Away Order, Prayer) with start/stop timers, daily totals, and exports.
+  call, Away Order, Prayer) with start/stop timers, daily totals, exports, and
+  per-department daily limits (tracked & flagged, not blocked).
+- **Hierarchy & scopes** — leaders see all tasks; managers see their department's
+  tasks (with a left-sidebar filter to focus on one member); agents see only
+  their own.
+- **Admin panel** (leaders only) — create/manage users (name, Gmail, department,
+  access level, PIN), departments, and per-department aux limits, all from the
+  web app.
 - **Exports** — every data view exports to **Excel (.xlsx)** *and* **CSV**
   (CSV buttons sit next to each Excel button).
 - **Import** — tasks and coaching records from Excel/CSV, with downloadable templates.

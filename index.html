@@ -59,6 +59,10 @@
         .coach-inp:focus { border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,0.18); }
         .dark .coach-inp { background:#0e1729; border-color:#26334d; color:#e5e7eb; }
         .dark .coach-inp option { background:#151E32; color:#e5e7eb; }
+        .adm-inp { background:#f9fafb; border:1px solid #e5e7eb; border-radius:0.6rem; padding:0.55rem 0.7rem; font-size:0.875rem; color:#1f2937; outline:none; transition:border-color .2s, box-shadow .2s; }
+        .adm-inp:focus { border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,0.18); }
+        .dark .adm-inp { background:#0e1729; border-color:#26334d; color:#e5e7eb; }
+        .dark .adm-inp option { background:#151E32; color:#e5e7eb; }
 
         /* Professional polish: calmer tables */
         #numbers-view thead, #coaching-view thead, #overview-view thead { background:#f1f5f9; }
@@ -285,6 +289,7 @@
                         <button onclick="importTasks()" id="importBtn" class="text-xs text-blue-600 dark:text-blue-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-blue-200 dark:border-blue-500/30"><i class="fa-solid fa-file-import mr-2"></i>Import Tasks</button>
                         <button onclick="downloadTemplate('tasks')" class="text-xs text-gray-600 dark:text-gray-300 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-gray-200 dark:border-borderline"><i class="fa-solid fa-file-arrow-down mr-2"></i>Task Template</button>
                         <button onclick="backupAll()" id="backupBtn" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-indigo-200 dark:border-indigo-500/30"><i class="fa-solid fa-shield-halved mr-2"></i>Backup All Data</button>
+                        <button onclick="openAdmin()" id="adminBtn" class="hidden text-xs text-deepTeal-700 dark:text-deepTeal-300 font-semibold py-2.5 rounded-lg bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-deepTeal-500/10 dark:to-emerald-500/10 shadow-sm border border-teal-200 dark:border-deepTeal-500/30"><i class="fa-solid fa-users-gear mr-2"></i>Admin · Users &amp; Departments</button>
                         <button onclick="archiveDone()" class="text-xs text-gray-500 hover:text-red-500 font-medium mt-2"><i class="fa-solid fa-trash mr-2"></i>Purge Closed</button>
                     </div>
                 </div>
@@ -448,6 +453,9 @@
                     </div>
                 </div>
 
+                <!-- Over-limit alerts (per department aux limits — report only) -->
+                <div id="aux-alerts" class="mb-4"></div>
+
                 <!-- Live agent cards -->
                 <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2 px-1">Live status</h3>
                 <div id="aux-live" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6"></div>
@@ -475,6 +483,65 @@
                 </div>
             </div>
         </main>
+
+        <!-- ===================== ADMIN (leaders only) ===================== -->
+        <div id="admin-modal" class="hidden fixed inset-0 z-[2200] bg-black/50 backdrop-blur-sm flex items-start md:items-center justify-center p-4 overflow-y-auto">
+            <div class="bg-white dark:bg-panel rounded-2xl border border-gray-200 dark:border-borderline shadow-2xl w-full max-w-3xl my-8">
+                <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-borderline">
+                    <h3 class="font-bold text-gray-800 dark:text-white"><i class="fa-solid fa-users-gear text-deepTeal-500 mr-2"></i>Administration</h3>
+                    <button onclick="closeAdmin()" class="text-gray-400 hover:text-flare"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <div class="flex gap-1 px-5 pt-4 border-b border-gray-200 dark:border-borderline">
+                    <button onclick="adminTab('users')"  id="adm-tab-users"  class="adm-tab px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 border-deepTeal-600 text-deepTeal-600">Users</button>
+                    <button onclick="adminTab('depts')"  id="adm-tab-depts"  class="adm-tab px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 border-transparent text-gray-500">Departments</button>
+                    <button onclick="adminTab('aux')"    id="adm-tab-aux"    class="adm-tab px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 border-transparent text-gray-500">Aux Limits</button>
+                </div>
+
+                <!-- USERS -->
+                <div id="adm-pane-users" class="p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Create and manage who can sign in, their department and access level.</p>
+                        <button onclick="adminEditUser(null)" class="text-xs bg-deepTeal-600 hover:bg-deepTeal-500 text-white font-semibold px-3 py-2 rounded-lg"><i class="fa-solid fa-plus mr-1.5"></i>New User</button>
+                    </div>
+                    <div id="adm-users-list" class="overflow-x-auto border border-gray-200 dark:border-borderline rounded-xl"></div>
+                    <!-- inline editor -->
+                    <div id="adm-user-form" class="hidden mt-4 bg-gray-50 dark:bg-base rounded-xl border border-gray-200 dark:border-borderline p-4">
+                        <input type="hidden" id="au-id">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <label class="flex flex-col gap-1"><span class="text-xs font-semibold text-gray-500">Name (login username)</span><input id="au-name" class="adm-inp"></label>
+                            <label class="flex flex-col gap-1"><span class="text-xs font-semibold text-gray-500">Gmail</span><input id="au-email" type="email" placeholder="name@gmail.com" class="adm-inp"></label>
+                            <label class="flex flex-col gap-1"><span class="text-xs font-semibold text-gray-500">Department</span><select id="au-dept" class="adm-inp"></select></label>
+                            <label class="flex flex-col gap-1"><span class="text-xs font-semibold text-gray-500">Access level</span><select id="au-level" class="adm-inp"><option value="agent">Agent — own tasks</option><option value="manager">Manager — department</option><option value="leader">Leader — everything</option></select></label>
+                            <label class="flex flex-col gap-1"><span class="text-xs font-semibold text-gray-500">Job title (optional)</span><input id="au-role" class="adm-inp"></label>
+                            <label class="flex flex-col gap-1"><span class="text-xs font-semibold text-gray-500"><span id="au-pin-label">PIN</span></span><input id="au-pin" type="text" autocomplete="off" placeholder="set / reset passcode" class="adm-inp"></label>
+                        </div>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <button onclick="adminCancelUser()" class="text-xs px-4 py-2 rounded-lg bg-gray-100 dark:bg-panel text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-borderline">Cancel</button>
+                            <button onclick="adminSaveUser()" class="text-xs px-5 py-2 rounded-lg bg-deepTeal-600 hover:bg-deepTeal-500 text-white font-semibold">Save User</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DEPARTMENTS -->
+                <div id="adm-pane-depts" class="hidden p-5">
+                    <div class="flex gap-2 mb-3">
+                        <input id="adm-new-dept" placeholder="New department name" class="adm-inp flex-grow">
+                        <button onclick="adminSaveDept(null)" class="text-xs bg-deepTeal-600 hover:bg-deepTeal-500 text-white font-semibold px-4 py-2 rounded-lg whitespace-nowrap"><i class="fa-solid fa-plus mr-1.5"></i>Add</button>
+                    </div>
+                    <div id="adm-depts-list" class="flex flex-col gap-2"></div>
+                </div>
+
+                <!-- AUX LIMITS -->
+                <div id="adm-pane-aux" class="hidden p-5">
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <span class="text-xs font-semibold text-gray-500">Department</span>
+                        <select id="adm-aux-dept" onchange="adminLoadAuxLimits()" class="adm-inp"></select>
+                        <span class="text-[11px] text-gray-400">Daily limit in minutes per aux type. 0 = no limit. (Tracked &amp; flagged — not blocked.)</span>
+                    </div>
+                    <div id="adm-aux-list" class="flex flex-col gap-2"></div>
+                </div>
+            </div>
+        </div>
 
         <!-- Coaching add/edit modal -->
         <div id="coach-modal" class="hidden fixed inset-0 z-[2000] bg-black/50 backdrop-blur-sm flex items-start md:items-center justify-center p-4 overflow-y-auto">
@@ -801,6 +868,7 @@
                     document.getElementById('excelBtn').classList.remove('hidden');
                     document.getElementById('csvBtn').classList.remove('hidden');
                     document.getElementById('leadershipBtn').classList.remove('hidden');
+                    document.getElementById('adminBtn').classList.remove('hidden');
                 } else {
                     mInput.disabled = true;
                     mInput.classList.add('bg-gray-100', 'cursor-not-allowed', 'opacity-70');
@@ -810,6 +878,7 @@
                     document.getElementById('excelBtn').classList.add('hidden');
                     document.getElementById('csvBtn').classList.add('hidden');
                     document.getElementById('leadershipBtn').classList.add('hidden');
+                    document.getElementById('adminBtn').classList.add('hidden');
                 }
 
                 updateBadge();
@@ -1750,18 +1819,57 @@
             _auxTicker = setInterval(_tickAux, 1000);
         }
 
+        let auxLimits = {};    // `${deptLower}||${type}` -> minutes (0 = no limit)
+        let memberDept = {};   // lower(name) -> department
+
         async function loadAux() {
             const day = document.getElementById('auxDay').value;
             if (!day) return;
             const start = new Date(day + 'T00:00:00');
             const end = new Date(start.getTime() + 24 * 3600 * 1000);
             // Include any still-open aux that started today
-            const { data, error } = await _client.from('aux_logs').select('*')
-                .gte('start_time', start.toISOString()).lt('start_time', end.toISOString())
-                .order('start_time', { ascending: false });
-            if (error) { connectionToast('Could not load aux logs.'); auxData = []; }
-            else auxData = data || [];
+            const [logs, lim] = await Promise.all([
+                _client.from('aux_logs').select('*')
+                    .gte('start_time', start.toISOString()).lt('start_time', end.toISOString())
+                    .order('start_time', { ascending: false }),
+                _client.from('department_aux_limits').select('*')
+            ]);
+            if (logs.error) { connectionToast('Could not load aux logs.'); auxData = []; }
+            else auxData = logs.data || [];
+
+            auxLimits = {};
+            (lim.data || []).forEach(r => { auxLimits[_lc(r.department) + '||' + r.aux_type] = r.daily_limit_minutes; });
+            memberDept = {};
+            visibleMembers.forEach(m => { if (m.manager_name) memberDept[_lc(m.manager_name)] = m.department; });
+            if (currentUser) memberDept[_lc(currentUser)] = currentDepartment;
+
             renderAux();
+        }
+
+        // per-agent department daily limit (minutes) for an aux type; 0 = none/unknown
+        function _auxLimitFor(agent, type) {
+            const dept = memberDept[_lc(agent)];
+            if (!dept) return 0;
+            return auxLimits[_lc(dept) + '||' + type] || 0;
+        }
+        // per-agent per-type total minutes for the loaded day
+        function _auxAgentTypeMinutes() {
+            const m = {};
+            auxData.forEach(r => { const k = _lc(r.agent) + '||' + r.aux_type; m[k] = (m[k] || 0) + _auxSeconds(r) / 60; });
+            return m;
+        }
+        // [{agent, type, used(min), limit(min)}] for everyone over their department cap
+        function _auxOverLimits() {
+            const used = _auxAgentTypeMinutes(); const out = [];
+            const seen = new Set();
+            auxData.forEach(r => {
+                const key = _lc(r.agent) + '||' + r.aux_type;
+                if (seen.has(key)) return; seen.add(key);
+                const lim = _auxLimitFor(r.agent, r.aux_type);
+                const u = used[key] || 0;
+                if (lim > 0 && u > lim) out.push({ agent: r.agent, type: r.aux_type, used: u, limit: lim });
+            });
+            return out.sort((a, b) => (b.used - b.limit) - (a.used - a.limit));
         }
 
         function _openAuxByAgent() {
@@ -1774,6 +1882,17 @@
             const open = _openAuxByAgent();
             const isToday = document.getElementById('auxDay').value === new Date().toISOString().slice(0, 10);
 
+            // ---- Over-limit alerts (per department aux limits — report only) ----
+            const over = _auxOverLimits();
+            const overByAgent = {}; over.forEach(o => { overByAgent[_lc(o.agent)] = true; });
+            const alerts = document.getElementById('aux-alerts');
+            if (over.length) {
+                alerts.innerHTML = `<div class="bg-rose-50 dark:bg-flare/10 border border-rose-200 dark:border-flare/30 rounded-xl p-3">
+                    <p class="text-xs font-bold text-rose-700 dark:text-rose-300 mb-2"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Over department aux limit (${over.length})</p>
+                    <div class="flex flex-wrap gap-2">${over.map(o => `<span class="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white dark:bg-panel border border-rose-200 dark:border-flare/30 text-rose-700 dark:text-rose-300"><i class="fa-solid ${AUX_ICONS[o.type] || 'fa-stopwatch'} mr-1"></i>${_esc(o.agent)} · ${_esc(o.type)} ${Math.round(o.used)}/${o.limit}m</span>`).join('')}</div>
+                </div>`;
+            } else { alerts.innerHTML = ''; }
+
             // ---- Live agent cards ----
             const live = document.getElementById('aux-live');
             live.innerHTML = _auxRoster().map(agent => {
@@ -1781,7 +1900,7 @@
                 if (cur) {
                     return `<div class="bg-white dark:bg-panel rounded-xl border border-amber-300 dark:border-amber-500/40 shadow-sm p-4">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="font-semibold text-gray-800 dark:text-white">${agent}</span>
+                            <span class="font-semibold text-gray-800 dark:text-white">${agent}${overByAgent[_lc(agent)] ? ' <i class="fa-solid fa-triangle-exclamation text-rose-500 ml-1" title="Over aux limit"></i>' : ''}</span>
                             <span class="text-[10px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full"><i class="fa-solid ${AUX_ICONS[cur.aux_type] || 'fa-stopwatch'} mr-1"></i>${cur.aux_type}</span>
                         </div>
                         <div class="text-2xl font-black tabular-nums text-gray-800 dark:text-white mb-3" data-aux-timer="${cur.id}">${_fmtDur(_auxSeconds(cur))}</div>
@@ -1867,16 +1986,25 @@
         }
 
         function _buildAuxRows() {
-            return auxData.map(r => ({
-                'Agent': r.agent,
-                'Auxiliary': r.aux_type,
-                'Date': new Date(r.start_time).toLocaleDateString(),
-                'Start': new Date(r.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                'End': r.end_time ? new Date(r.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'running',
-                'Duration': _fmtDur(_auxSeconds(r)),
-                'Duration (seconds)': Math.round(_auxSeconds(r)),
-                'Logged By': r.logged_by || ''
-            }));
+            const used = _auxAgentTypeMinutes();
+            return auxData.map(r => {
+                const limit = _auxLimitFor(r.agent, r.aux_type);
+                const dayMin = used[_lc(r.agent) + '||' + r.aux_type] || 0;
+                return {
+                    'Agent': r.agent,
+                    'Department': memberDept[_lc(r.agent)] || '',
+                    'Auxiliary': r.aux_type,
+                    'Date': new Date(r.start_time).toLocaleDateString(),
+                    'Start': new Date(r.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    'End': r.end_time ? new Date(r.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'running',
+                    'Duration': _fmtDur(_auxSeconds(r)),
+                    'Duration (seconds)': Math.round(_auxSeconds(r)),
+                    'Daily Limit (min)': limit || '',
+                    'Agent Day Total (min)': Math.round(dayMin),
+                    'Over Limit': (limit > 0 && dayMin > limit) ? 'YES' : '',
+                    'Logged By': r.logged_by || ''
+                };
+            });
         }
 
         async function exportAuxExcel() {
@@ -1891,6 +2019,184 @@
         function exportAuxCSV() {
             if (!auxData.length) { alert('No aux activity to export.'); return; }
             downloadCSV(_buildAuxRows(), `${_exportPrefix()}_AUX_${document.getElementById('auxDay').value}.csv`);
+        }
+
+        /* ===================== ADMIN (leaders only) ===================== */
+        let adminUsers = [], adminDepts = [];
+        const _esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        async function openAdmin() {
+            if (!currentIsLeader) { alert('Leaders only.'); return; }
+            document.getElementById('admin-modal').classList.remove('hidden');
+            adminTab('users');
+            await adminReload();
+        }
+        function closeAdmin() { document.getElementById('admin-modal').classList.add('hidden'); }
+
+        function adminTab(t) {
+            ['users','depts','aux'].forEach(k => {
+                document.getElementById('adm-pane-' + k).classList.toggle('hidden', k !== t);
+                const tab = document.getElementById('adm-tab-' + k);
+                const on = k === t;
+                tab.classList.toggle('border-deepTeal-600', on);
+                tab.classList.toggle('text-deepTeal-600', on);
+                tab.classList.toggle('border-transparent', !on);
+                tab.classList.toggle('text-gray-500', !on);
+            });
+            if (t === 'aux') adminRenderAuxDeptOptions();
+        }
+
+        async function adminReload() {
+            try {
+                const [u, d] = await Promise.all([
+                    _client.rpc('admin_list_users', { p_pin: currentPin }),
+                    _client.from('departments').select('*').order('name')
+                ]);
+                if (u.error) throw u.error;
+                adminUsers = u.data || [];
+                adminDepts = (d.data || []);
+            } catch (e) { alert(e.message || 'Failed to load admin data.'); return; }
+            adminRenderUsers();
+            adminRenderDepts();
+            adminRenderAuxDeptOptions();
+        }
+
+        // ---- Users ----
+        function adminRenderUsers() {
+            const lvlBadge = { leader: 'bg-amber-100 text-amber-700', manager: 'bg-indigo-100 text-indigo-700', agent: 'bg-gray-100 text-gray-600' };
+            const rows = adminUsers.map(u => `<tr class="border-b border-gray-100 dark:border-borderline/60 text-sm">
+                <td class="py-2 px-3 font-medium text-gray-800 dark:text-gray-100">${_esc(u.manager_name)}</td>
+                <td class="py-2 px-3 text-gray-500 dark:text-gray-400">${_esc(u.email || '—')}</td>
+                <td class="py-2 px-3 text-gray-600 dark:text-gray-300">${_esc(u.department || '—')}</td>
+                <td class="py-2 px-3"><span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${lvlBadge[u.access_level] || lvlBadge.agent}">${_esc(u.access_level)}</span></td>
+                <td class="py-2 px-3 text-right whitespace-nowrap">
+                    <button onclick="adminEditUser(${u.id})" class="text-deepTeal-600 hover:text-deepTeal-500 mr-3" title="Edit"><i class="fa-solid fa-pen text-xs"></i></button>
+                    <button onclick="adminDeleteUser(${u.id})" class="text-gray-400 hover:text-flare" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>
+                </td></tr>`).join('');
+            document.getElementById('adm-users-list').innerHTML = `<table class="w-full min-w-[560px]"><thead>
+                <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-borderline bg-gray-50 dark:bg-base">
+                <th class="py-2 px-3">Name</th><th class="py-2 px-3">Gmail</th><th class="py-2 px-3">Dept</th><th class="py-2 px-3">Level</th><th class="py-2 px-3"></th></tr>
+                </thead><tbody>${rows || `<tr><td colspan="5" class="py-6 text-center text-gray-400 text-sm">No users.</td></tr>`}</tbody></table>`;
+        }
+
+        function _fillDeptSelect(sel, val) {
+            sel.innerHTML = adminDepts.map(d => `<option value="${_esc(d.name)}"${d.name === val ? ' selected' : ''}>${_esc(d.name)}</option>`).join('')
+                || '<option value="">(create a department first)</option>';
+            if (val && !adminDepts.some(d => d.name === val)) sel.insertAdjacentHTML('afterbegin', `<option value="${_esc(val)}" selected>${_esc(val)}</option>`);
+        }
+
+        function adminEditUser(id) {
+            const u = id == null ? null : adminUsers.find(x => x.id === id);
+            document.getElementById('adm-user-form').classList.remove('hidden');
+            document.getElementById('au-id').value = u ? u.id : '';
+            document.getElementById('au-name').value = u ? u.manager_name : '';
+            document.getElementById('au-email').value = u ? (u.email || '') : '';
+            _fillDeptSelect(document.getElementById('au-dept'), u ? u.department : (adminDepts[0] && adminDepts[0].name));
+            document.getElementById('au-level').value = u ? (u.access_level || 'agent') : 'agent';
+            document.getElementById('au-role').value = u ? (u.role || '') : '';
+            document.getElementById('au-pin').value = '';
+            document.getElementById('au-pin-label').textContent = u ? 'Reset PIN (leave blank to keep)' : 'PIN (required)';
+            document.getElementById('adm-user-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        function adminCancelUser() { document.getElementById('adm-user-form').classList.add('hidden'); }
+
+        async function adminSaveUser() {
+            const id = document.getElementById('au-id').value;
+            const payload = {
+                p_pin: currentPin,
+                p_id: id ? parseInt(id) : null,
+                p_name: document.getElementById('au-name').value.trim(),
+                p_email: document.getElementById('au-email').value.trim(),
+                p_department: document.getElementById('au-dept').value,
+                p_role: document.getElementById('au-role').value.trim(),
+                p_access_level: document.getElementById('au-level').value,
+                p_is_leader: document.getElementById('au-level').value === 'leader',
+                p_new_pin: document.getElementById('au-pin').value.trim()
+            };
+            if (!payload.p_name) { alert('Name is required.'); return; }
+            const { error } = await _client.rpc('admin_save_user', payload);
+            if (error) { alert(error.message || 'Could not save user.'); return; }
+            toast('User saved ✓', 'success');
+            adminCancelUser();
+            await adminReload();
+        }
+
+        async function adminDeleteUser(id) {
+            const u = adminUsers.find(x => x.id === id);
+            const ok = await confirmDialog(`Delete user "${u ? u.manager_name : ''}"? They will no longer be able to sign in.`, { confirmText: 'Delete', danger: true });
+            if (!ok) return;
+            const { error } = await _client.rpc('admin_delete_user', { p_pin: currentPin, p_id: id });
+            if (error) { alert(error.message || 'Could not delete user.'); return; }
+            await adminReload();
+        }
+
+        // ---- Departments ----
+        function adminRenderDepts() {
+            const list = document.getElementById('adm-depts-list');
+            list.innerHTML = adminDepts.map(d => `<div class="flex items-center gap-2 bg-gray-50 dark:bg-base border border-gray-200 dark:border-borderline rounded-lg px-3 py-2">
+                <input value="${_esc(d.name)}" id="dept-inp-${d.id}" class="adm-inp flex-grow">
+                <button onclick="adminSaveDept(${d.id})" class="text-xs text-deepTeal-600 hover:text-deepTeal-500 font-semibold px-2" title="Rename"><i class="fa-solid fa-floppy-disk"></i></button>
+                <button onclick="adminDeleteDept(${d.id})" class="text-xs text-gray-400 hover:text-flare px-2" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </div>`).join('') || `<p class="text-sm text-gray-400 py-4 text-center">No departments yet.</p>`;
+        }
+
+        async function adminSaveDept(id) {
+            const name = id == null ? document.getElementById('adm-new-dept').value.trim()
+                                    : document.getElementById('dept-inp-' + id).value.trim();
+            if (!name) { alert('Department name is required.'); return; }
+            const { error } = await _client.rpc('admin_save_department', { p_pin: currentPin, p_id: id, p_name: name });
+            if (error) { alert(error.message || 'Could not save department.'); return; }
+            if (id == null) document.getElementById('adm-new-dept').value = '';
+            toast('Department saved ✓', 'success');
+            await adminReload();
+        }
+
+        async function adminDeleteDept(id) {
+            const d = adminDepts.find(x => x.id === id);
+            const ok = await confirmDialog(`Delete department "${d ? d.name : ''}"?`, { confirmText: 'Delete', danger: true });
+            if (!ok) return;
+            const { error } = await _client.rpc('admin_delete_department', { p_pin: currentPin, p_id: id });
+            if (error) { alert(error.message || 'Could not delete department.'); return; }
+            await adminReload();
+        }
+
+        // ---- Aux limits ----
+        function adminRenderAuxDeptOptions() {
+            const sel = document.getElementById('adm-aux-dept');
+            if (!sel) return;
+            const prev = sel.value;
+            sel.innerHTML = adminDepts.map(d => `<option value="${_esc(d.name)}">${_esc(d.name)}</option>`).join('');
+            if (prev) sel.value = prev;
+            adminLoadAuxLimits();
+        }
+
+        const _auxSlug = t => 'auxlim-' + t.replace(/[^a-zA-Z0-9]/g, '_');
+
+        async function adminLoadAuxLimits() {
+            const dept = document.getElementById('adm-aux-dept').value;
+            const list = document.getElementById('adm-aux-list');
+            if (!dept) { list.innerHTML = `<p class="text-sm text-gray-400 py-4 text-center">Create a department first.</p>`; return; }
+            const { data } = await _client.from('department_aux_limits').select('*').eq('department', dept);
+            const byType = {}; (data || []).forEach(r => byType[r.aux_type] = r.daily_limit_minutes);
+            list.innerHTML = AUX_TYPES.map(t => `<div class="flex items-center gap-3 bg-gray-50 dark:bg-base border border-gray-200 dark:border-borderline rounded-lg px-3 py-2">
+                <i class="fa-solid ${AUX_ICONS[t]} text-deepTeal-500 w-5"></i>
+                <span class="text-sm text-gray-700 dark:text-gray-200 flex-grow">${t}</span>
+                <input type="number" min="0" id="${_auxSlug(t)}" value="${byType[t] != null ? byType[t] : 0}" class="adm-inp w-24 text-right">
+                <span class="text-xs text-gray-400">min/day</span>
+            </div>`).join('')
+            + `<div class="flex justify-end mt-2"><button onclick="adminSaveAuxLimits()" class="text-xs px-5 py-2 rounded-lg bg-deepTeal-600 hover:bg-deepTeal-500 text-white font-semibold">Save Limits</button></div>`;
+        }
+
+        async function adminSaveAuxLimits() {
+            const dept = document.getElementById('adm-aux-dept').value;
+            if (!dept) return;
+            for (const t of AUX_TYPES) {
+                const el = document.getElementById(_auxSlug(t));
+                const v = el ? (parseInt(el.value, 10) || 0) : 0;
+                const { error } = await _client.rpc('admin_set_aux_limit', { p_pin: currentPin, p_department: dept, p_aux_type: t, p_minutes: v });
+                if (error) { alert(error.message || 'Could not save aux limit.'); return; }
+            }
+            toast('Aux limits saved ✓', 'success');
         }
 
         async function loadOverview() {

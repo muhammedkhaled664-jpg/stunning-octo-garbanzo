@@ -81,6 +81,16 @@ RPCs — the same model as the rest of the app (see "What is not affected: write
 above). Like the other tables, its rows are publicly *readable* with the anon
 key, so tighten the read policy when you move to real auth.
 
+### Hierarchy scoping is a UX boundary, not a security boundary (yet)
+
+Task visibility (leader=all, manager=department, agent=own) is filtered
+**client-side**, because reads are public (see above). Anyone with the
+publishable key could still query all rows directly. The *write* and *admin*
+paths ARE enforced server-side: user/department/aux-limit management goes
+through `admin_*` RPCs that require a leader PIN (`_auth_leader`). Once reads
+move to real auth, re-implement the scope as RLS `using (...)` predicates so it
+becomes a true security boundary.
+
 ## 2. Secrets in `config.js`
 
 `config.js` is git-ignored (`.gitignore`) and provided via `config.example.js`

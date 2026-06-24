@@ -1075,11 +1075,13 @@
             } else if (currentAccessLevel === 'manager') {
                 scoped = rows.filter(t => _lc(t.department) === dept);
             } else {
-                // agent: only tasks assigned to / created by them
-                scoped = rows.filter(t => {
+                // agent: only tasks assigned to / created by them.
+                // Guard on a non-empty `me` — otherwise m.includes('') matched every
+                // task and leaked the whole board to the agent (notably on mobile).
+                scoped = me ? rows.filter(t => {
                     const m = _lc(t.manager);
                     return m && (m === me || m.includes(me) || me.includes(m));
-                });
+                }) : [];
             }
             if (taskScopeMember) {
                 const sel = _lc(taskScopeMember);
@@ -1953,6 +1955,9 @@
         // visibleMembers is scoped by the viewer (whole hierarchy for leaders, the
         // department for managers); the viewer themselves is always included.
         function _auxRoster() {
+            // Agents are hard-locked to just themselves — never fall through to the
+            // full configured list (which previously leaked the whole roster).
+            if (currentAccessLevel === 'agent') return currentUser ? [currentUser] : [];
             const names = [...visibleMembers.map(m => m.manager_name), currentUser].filter(Boolean);
             const uniq = [...new Set(names)].sort((a, b) => a.localeCompare(b));
             return uniq.length ? uniq : (CFG.agents || []);
@@ -2254,10 +2259,11 @@
             const el = document.getElementById('kpi-out');
             if (!el || !_client) return;
             try {
+                // Team-wide count of everyone currently on an aux (a number only — no
+                // names), shown to all roles including agents.
                 const { data, error } = await _client.from('aux_logs').select('agent,end_time').is('end_time', null);
                 if (error) return;
-                const rows = _scopeAuxRows(data || []);
-                setKpi('kpi-out', rows.length);
+                setKpi('kpi-out', (data || []).length);
             } catch (_) { /* non-fatal */ }
         }
 

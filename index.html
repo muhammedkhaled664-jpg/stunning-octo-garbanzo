@@ -159,7 +159,7 @@
                 <span class="brand-mark"><img src="logo.png" data-brand-logo alt="Logo"></span>
                 <div class="hidden md:flex flex-col leading-none">
                     <h1 data-brand-name class="text-xl font-black text-gray-800 dark:text-white tracking-tighter">LogiSync</h1>
-                    <span class="text-[10px] uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500 font-semibold mt-0.5">Operations Console</span>
+                    <span class="text-[10px] uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500 font-semibold mt-0.5">Operations Console <span id="buildTag" class="normal-case tracking-normal text-deepTeal-500"></span></span>
                 </div>
             </div>
             <div class="flex items-center gap-2.5 text-sm font-medium">
@@ -3503,16 +3503,20 @@
             window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
         }
     </script>
-    <!-- PWA: register service worker (caches the static app shell only) -->
+    <!-- Build stamp + service worker (network-only; no shell caching) -->
     <script>
+        // Bump this string every deploy so the visible tag confirms which build is loaded.
+        const BUILD = '2026-06-24·b1';
+        window.addEventListener('load', () => {
+            const t = document.getElementById('buildTag');
+            if (t) t.textContent = '· ' + BUILD;
+            console.log('[LogiSync] build', BUILD);
+        });
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then((reg) => {
-                    // Check for a new deploy on load and periodically.
                     reg.update();
                     setInterval(() => reg.update(), 60 * 1000);
-                    // When a new service worker takes control, reload once so the
-                    // user always lands on the latest deploy (no manual cache clear).
                     let reloaded = false;
                     navigator.serviceWorker.addEventListener('controllerchange', () => {
                         if (reloaded) return;

@@ -1,70 +1,26 @@
 /* =====================================================================
-   LogiSync Service Worker
-   Caches ONLY the static app shell so the UI loads offline / fast.
+   LogiSync Service Worker — NETWORK-ONLY.
 
-   Deliberately does NOT cache:
-     - Supabase API requests (live data must always be fresh)
-     - CDN scripts loaded on demand (SheetJS, Chart.js, supabase-js)
-   Those are handled network-only; if the network is down the app's
-   throttled connection toast informs the user.
+   We intentionally do NOT cache the app shell anymore. Cache-first /
+   stale-while-revalidate caused the UI to load stale builds, so this worker
+   simply stays out of the way: it claims clients, deletes any old caches
+   left over from previous versions, and lets every request go to the network.
+   The app is an online tool (Supabase-backed), so offline support isn't
+   needed and isn't worth the stale-content risk.
    ===================================================================== */
 
-const CACHE = 'logisync-shell-v2';
+const CACHE = 'logisync-shell-v4';
 
-// The static shell — same-origin assets that make up the UI.
-const SHELL = [
-  './',
-  './index.html',
-  './config.js',
-  './tailwind.build.css',
-  './logo.svg',
-  './logo.png',
-  './manifest.webmanifest'
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE)
-      // addAll is atomic; ignore individual failures so install still succeeds
-      .then((cache) => Promise.all(SHELL.map((url) =>
-        cache.add(url).catch((err) => console.warn('[sw] skip caching', url, err))
-      )))
-      .then(() => self.skipWaiting())
-  );
-});
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil((async () => {
+    // Remove every cache from older service-worker versions.
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-
-  // Only handle same-origin GET requests; everything else (Supabase API,
-  // CDNs, POST/PATCH, etc.) goes straight to the network.
-  if (req.method !== 'GET') return;
-
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
-
-  // Cache-first for the static shell, with a network fallback that also
-  // refreshes the cached copy when online.
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      const network = fetch(req)
-        .then((res) => {
-          if (res && res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
-  );
-});
+// No 'fetch' handler on purpose — the browser goes straight to the network
+// for everything, so a new deploy is always served fresh on reload.

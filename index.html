@@ -2032,13 +2032,11 @@
             const start = new Date(from + 'T00:00:00');
             const end = new Date(new Date(to + 'T00:00:00').getTime() + 24 * 3600 * 1000);
             const [logs, lim] = await Promise.all([
-                _client.from('aux_logs').select('*')
-                    .gte('start_time', start.toISOString()).lt('start_time', end.toISOString())
-                    .order('start_time', { ascending: false }),
+                _client.rpc('aux_visible', { p_pin: currentPin, p_from: start.toISOString(), p_to: end.toISOString() }),
                 _client.from('department_aux_limits').select('*')
             ]);
             if (logs.error) { connectionToast('Could not load aux logs.'); auxData = []; }
-            else auxData = _scopeAuxRows(logs.data || []);
+            else auxData = logs.data || [];   // already scoped server-side (agent=self, manager=dept, leader=all)
 
             auxLimits = {};
             (lim.data || []).forEach(r => { auxLimits[_lc(r.department) + '||' + r.aux_type] = r.daily_limit_minutes; });
@@ -2308,11 +2306,9 @@
             if (!to || to < from) to = from;
             const start = new Date(from + 'T00:00:00');
             const end = new Date(new Date(to + 'T00:00:00').getTime() + 24 * 3600 * 1000);
-            const { data, error } = await _client.from('training_logs').select('*')
-                .gte('start_time', start.toISOString()).lt('start_time', end.toISOString())
-                .order('start_time', { ascending: false });
+            const { data, error } = await _client.rpc('training_visible', { p_pin: currentPin, p_from: start.toISOString(), p_to: end.toISOString() });
             if (error) { connectionToast('Could not load training logs.'); trainingData = []; }
-            else trainingData = _scopeTrainRows(data || []);
+            else trainingData = data || [];   // scoped server-side
             renderTraining();
         }
 
@@ -2486,11 +2482,9 @@
             if (!to || to < from) to = from;
             const start = new Date(from + 'T00:00:00');
             const end = new Date(new Date(to + 'T00:00:00').getTime() + 24 * 3600 * 1000);
-            const { data, error } = await _client.from('attendance_logs').select('*')
-                .gte('check_in', start.toISOString()).lt('check_in', end.toISOString())
-                .order('check_in', { ascending: false });
+            const { data, error } = await _client.rpc('attendance_visible', { p_pin: currentPin, p_from: start.toISOString(), p_to: end.toISOString() });
             if (error) { connectionToast('Could not load attendance.'); attendanceData = []; }
-            else attendanceData = _scopeAttRows(data || []);
+            else attendanceData = data || [];   // scoped server-side
             renderAttendance();
         }
 
@@ -3506,7 +3500,7 @@
     <!-- Build stamp + service worker (network-only; no shell caching) -->
     <script>
         // Bump this string every deploy so the visible tag confirms which build is loaded.
-        const BUILD = '2026-06-24·b1';
+        const BUILD = '2026-06-24·b2';
         window.addEventListener('load', () => {
             const t = document.getElementById('buildTag');
             if (t) t.textContent = '· ' + BUILD;

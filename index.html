@@ -304,6 +304,7 @@
                         <button onclick="backupAll()" id="backupBtn" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-indigo-200 dark:border-indigo-500/30"><i class="fa-solid fa-shield-halved mr-2"></i>Backup All Data</button>
                         <button onclick="openAdmin()" id="adminBtn" class="hidden text-xs text-deepTeal-700 dark:text-deepTeal-300 font-semibold py-2.5 rounded-lg bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-deepTeal-500/10 dark:to-emerald-500/10 shadow-sm border border-teal-200 dark:border-deepTeal-500/30"><i class="fa-solid fa-users-gear mr-2"></i>Admin · Users &amp; Departments</button>
                         <button onclick="archiveDone()" class="text-xs text-gray-500 hover:text-red-500 font-medium mt-2"><i class="fa-solid fa-trash mr-2"></i>Purge Closed</button>
+                        <button onclick="purgeParked()" id="purgeParkedBtn" class="hidden text-xs text-gray-500 hover:text-red-500 font-medium"><i class="fa-solid fa-box-archive mr-2"></i>Purge Parked</button>
                     </div>
                 </div>
                 
@@ -992,6 +993,7 @@
                     document.getElementById('csvBtn').classList.remove('hidden');
                     document.getElementById('leadershipBtn').classList.remove('hidden');
                     document.getElementById('adminBtn').classList.remove('hidden');
+                    document.getElementById('purgeParkedBtn').classList.remove('hidden');
                 } else {
                     document.getElementById('mobile-leader-controls').classList.add('hidden');
                     document.getElementById('eodBtn').classList.add('hidden');
@@ -1000,6 +1002,7 @@
                     document.getElementById('csvBtn').classList.add('hidden');
                     document.getElementById('leadershipBtn').classList.add('hidden');
                     document.getElementById('adminBtn').classList.add('hidden');
+                    document.getElementById('purgeParkedBtn').classList.add('hidden');
                 }
 
                 updateBadge();
@@ -1490,6 +1493,14 @@
             if(await confirmDialog("Purge all closed items? This cannot be undone.", { confirmText: 'Purge', danger: true })) {
                 const { error } = await _client.rpc('secure_archive_done', { user_pin: currentPin });
                 if (error) alert("Access Denied: " + error.message); else loadTasks();
+            }
+        }
+
+        async function purgeParked() {
+            if(await confirmDialog("Purge ALL parked items? This permanently deletes every parked task and cannot be undone.", { confirmText: 'Purge Parked', danger: true })) {
+                const { error } = await _client.rpc('secure_purge_parked', { user_pin: currentPin });
+                if (error) alert("Access Denied: " + error.message);
+                else { toast('Parked tasks purged', 'success'); loadTasks(); }
             }
         }
 
@@ -3503,7 +3514,7 @@
     <!-- Build stamp + service worker (network-only; no shell caching) -->
     <script>
         // Bump this string every deploy so the visible tag confirms which build is loaded.
-        const BUILD = '2026-06-24·b3';
+        const BUILD = '2026-06-24·b4';
         window.addEventListener('load', () => {
             const t = document.getElementById('buildTag');
             if (t) t.textContent = '· ' + BUILD;

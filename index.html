@@ -297,10 +297,7 @@
                     <button onclick="openAttendance()" id="tabAttendance" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-clock-rotate-left w-4"></i> Attendance</button>
                     <div class="mt-6 flex flex-col gap-2 pt-6 border-t border-gray-200 dark:border-borderline">
                         <button onclick="copyEOD()" id="eodBtn" class="text-xs text-deepTeal-600 dark:text-deepTeal-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-teal-200 hidden"><i class="fa-solid fa-clipboard mr-2"></i>Copy Weekly</button>
-                        <button onclick="exportToExcel()" id="excelBtn" class="text-xs text-green-600 dark:text-green-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-green-200 hidden"><i class="fa-solid fa-file-excel mr-2"></i>Export .XLSX</button>
                         <button onclick="exportToCSV()" id="csvBtn" class="text-xs text-teal-600 dark:text-teal-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-teal-500/30 hidden"><i class="fa-solid fa-file-csv mr-2"></i>Export .CSV</button>
-                        <button onclick="importTasks()" id="importBtn" class="text-xs text-blue-600 dark:text-blue-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-blue-200 dark:border-blue-500/30"><i class="fa-solid fa-file-import mr-2"></i>Import Tasks</button>
-                        <button onclick="downloadTemplate('tasks')" class="text-xs text-gray-600 dark:text-gray-300 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-gray-200 dark:border-borderline"><i class="fa-solid fa-file-arrow-down mr-2"></i>Task Template</button>
                         <button onclick="backupAll()" id="backupBtn" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-indigo-200 dark:border-indigo-500/30"><i class="fa-solid fa-shield-halved mr-2"></i>Backup All Data</button>
                         <button onclick="openAdmin()" id="adminBtn" class="hidden text-xs text-deepTeal-700 dark:text-deepTeal-300 font-semibold py-2.5 rounded-lg bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-deepTeal-500/10 dark:to-emerald-500/10 shadow-sm border border-teal-200 dark:border-deepTeal-500/30"><i class="fa-solid fa-users-gear mr-2"></i>Admin · Users &amp; Departments</button>
                         <button onclick="archiveDone()" class="text-xs text-gray-500 hover:text-red-500 font-medium mt-2"><i class="fa-solid fa-trash mr-2"></i>Purge Closed<span id="closedCount"></span></button>
@@ -989,7 +986,6 @@
                     document.getElementById('mobile-leader-controls').classList.remove('hidden');
                     document.getElementById('eodBtn').classList.remove('hidden');
                     document.getElementById('mobileEodBtn').classList.remove('hidden');
-                    document.getElementById('excelBtn').classList.remove('hidden');
                     document.getElementById('csvBtn').classList.remove('hidden');
                     document.getElementById('leadershipBtn').classList.remove('hidden');
                     document.getElementById('adminBtn').classList.remove('hidden');
@@ -998,7 +994,6 @@
                     document.getElementById('mobile-leader-controls').classList.add('hidden');
                     document.getElementById('eodBtn').classList.add('hidden');
                     document.getElementById('mobileEodBtn').classList.add('hidden');
-                    document.getElementById('excelBtn').classList.add('hidden');
                     document.getElementById('csvBtn').classList.add('hidden');
                     document.getElementById('leadershipBtn').classList.add('hidden');
                     document.getElementById('adminBtn').classList.add('hidden');
@@ -3521,7 +3516,7 @@
     <!-- Build stamp + service worker (network-only; no shell caching) -->
     <script>
         // Bump this string every deploy so the visible tag confirms which build is loaded.
-        const BUILD = '2026-06-24·b5';
+        const BUILD = '2026-06-24·b6';
         window.addEventListener('load', () => {
             const t = document.getElementById('buildTag');
             if (t) t.textContent = '· ' + BUILD;

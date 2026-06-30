@@ -295,6 +295,7 @@
                     <button onclick="openAux()" id="tabAux" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-stopwatch w-4"></i> AUX Tracker</button>
                     <button onclick="openTraining()" id="tabTraining" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-graduation-cap w-4"></i> Training</button>
                     <button onclick="openAttendance()" id="tabAttendance" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-clock-rotate-left w-4"></i> Attendance</button>
+                    <button onclick="openSpiff()" id="tabSpiff" class="tab-btn-side flex items-center gap-3 text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-panel text-left py-2.5 px-3 rounded-lg font-medium text-sm transition-all border border-transparent"><i class="fa-solid fa-clipboard-check w-4"></i> Spiff Validation</button>
                     <div class="mt-6 flex flex-col gap-2 pt-6 border-t border-gray-200 dark:border-borderline">
                         <button onclick="copyEOD()" id="eodBtn" class="text-xs text-deepTeal-600 dark:text-deepTeal-500 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-teal-200 hidden"><i class="fa-solid fa-clipboard mr-2"></i>Copy Weekly</button>
                         <button onclick="exportToCSV()" id="csvBtn" class="text-xs text-teal-600 dark:text-teal-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-teal-200 dark:border-teal-500/30 hidden"><i class="fa-solid fa-file-csv mr-2"></i>Export .CSV</button>
@@ -593,7 +594,84 @@
                     </table>
                 </div>
             </div>
+
+            <!-- ===================== SPIFF VALIDATION ===================== -->
+            <div id="spiff-view" class="hidden">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5 border-b border-gray-200 dark:border-borderline pb-4">
+                    <div class="flex items-center gap-3">
+                        <button onclick="goBoard()" class="h-[40px] px-3 rounded-xl bg-white dark:bg-panel border border-gray-200 dark:border-borderline text-gray-600 dark:text-gray-300 text-sm font-medium shadow-sm hover:bg-gray-50 dark:hover:bg-base transition-colors"><i class="fa-solid fa-arrow-left mr-1.5"></i>Back</button>
+                        <div>
+                            <h2 class="text-lg font-black text-gray-800 dark:text-white tracking-tight"><i class="fa-solid fa-clipboard-check text-deepTeal-500 mr-2"></i>Spiff Validation</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Validate spiff eligibility and log fails. <span id="spiff-status" class="text-deepTeal-500"></span></p>
+                        </div>
+                    </div>
+                    <button onclick="openSpiffTeams()" class="h-[40px] px-3 rounded-xl bg-white dark:bg-panel border border-gray-200 dark:border-borderline text-gray-600 dark:text-gray-300 text-sm font-medium shadow-sm hover:bg-gray-50 dark:hover:bg-base transition-colors"><i class="fa-solid fa-users-gear mr-1.5"></i>Edit teams</button>
+                </div>
+
+                <!-- Eligibility -->
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Eligibility</h3>
+                    <button onclick="spiffAddElig()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-deepTeal-600 hover:bg-deepTeal-500 text-white"><i class="fa-solid fa-plus mr-1"></i>Add row</button>
+                </div>
+                <div class="overflow-x-auto bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm mb-8">
+                    <table class="w-full text-sm min-w-[640px]">
+                        <thead>
+                            <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-borderline">
+                                <th class="py-3 px-4 font-semibold">Agent's Name</th>
+                                <th class="py-3 px-3 font-semibold w-28">Transfers</th>
+                                <th class="py-3 px-3 font-semibold w-44">Status</th>
+                                <th class="py-3 px-3 font-semibold w-44">Team</th>
+                                <th class="py-3 px-3 font-semibold text-right w-12">&nbsp;</th>
+                            </tr>
+                        </thead>
+                        <tbody id="spiff-elig-body"></tbody>
+                    </table>
+                </div>
+
+                <!-- Fails -->
+                <div class="flex items-center justify-between mb-2 px-1">
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Fails</h3>
+                    <button onclick="spiffAddFail()" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-deepTeal-600 hover:bg-deepTeal-500 text-white"><i class="fa-solid fa-plus mr-1"></i>Add fail</button>
+                </div>
+                <div class="overflow-x-auto bg-white dark:bg-panel rounded-xl border border-gray-200 dark:border-borderline shadow-sm">
+                    <table class="w-full text-sm min-w-[1100px]">
+                        <thead>
+                            <tr class="text-left text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-borderline">
+                                <th class="py-3 px-3 font-semibold w-32">Call Date</th>
+                                <th class="py-3 px-3 font-semibold w-32">Number</th>
+                                <th class="py-3 px-3 font-semibold w-36">Name</th>
+                                <th class="py-3 px-3 font-semibold w-32">Dispo</th>
+                                <th class="py-3 px-3 font-semibold w-20">State</th>
+                                <th class="py-3 px-3 font-semibold w-28">Status</th>
+                                <th class="py-3 px-3 font-semibold w-44">Link</th>
+                                <th class="py-3 px-3 font-semibold">Comment</th>
+                                <th class="py-3 px-3 font-semibold w-24">TimeStamp</th>
+                                <th class="py-3 px-3 font-semibold w-16 text-center">Full call</th>
+                                <th class="py-3 px-3 font-semibold text-right w-12">&nbsp;</th>
+                            </tr>
+                        </thead>
+                        <tbody id="spiff-fail-body"></tbody>
+                    </table>
+                </div>
+            </div>
         </main>
+
+        <!-- Spiff teams editor modal -->
+        <div id="spiff-teams-modal" class="hidden fixed inset-0 z-[2100] bg-black/50 backdrop-blur-sm flex items-start md:items-center justify-center p-4 overflow-y-auto">
+            <div class="bg-white dark:bg-panel rounded-2xl border border-gray-200 dark:border-borderline shadow-2xl w-full max-w-md my-8">
+                <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-borderline">
+                    <h3 class="font-bold text-gray-800 dark:text-white"><i class="fa-solid fa-users-gear text-deepTeal-500 mr-2"></i>Team options</h3>
+                    <button onclick="closeSpiffTeams()" class="text-gray-400 hover:text-rose-500"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <div class="p-5">
+                    <div class="flex gap-2 mb-3">
+                        <input id="spiff-new-team" placeholder="New team name" class="flex-grow bg-gray-50 dark:bg-base border border-gray-200 dark:border-borderline rounded-lg px-3 py-2 text-sm outline-none">
+                        <button onclick="spiffAddTeam()" class="text-xs bg-deepTeal-600 hover:bg-deepTeal-500 text-white font-semibold px-4 py-2 rounded-lg whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i>Add</button>
+                    </div>
+                    <div id="spiff-teams-list" class="flex flex-col gap-2"></div>
+                </div>
+            </div>
+        </div>
 
         <!-- ===================== ADMIN (leaders only) ===================== -->
         <div id="admin-modal" class="hidden fixed inset-0 z-[2200] bg-black/50 backdrop-blur-sm flex items-start md:items-center justify-center p-4 overflow-y-auto">
@@ -707,6 +785,7 @@
         <button id="mTabAux" onclick="openAux();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-stopwatch w-5 text-deepTeal-500"></i> AUX Tracker</button>
         <button onclick="openTraining();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-graduation-cap w-5 text-deepTeal-500"></i> Training</button>
         <button id="mTabAttendance" onclick="openAttendance();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-clock-rotate-left w-5 text-deepTeal-500"></i> Attendance</button>
+        <button onclick="openSpiff();closeReportsMenu()" class="text-left text-sm px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-base"><i class="fa-solid fa-clipboard-check w-5 text-deepTeal-500"></i> Spiff Validation</button>
         <button id="leadershipBtn" onclick="openLeadership();closeReportsMenu()" class="hidden text-left text-sm px-3 py-2.5 rounded-lg text-white bg-gradient-to-r from-deepTeal-600 to-deepTeal-500 hover:from-deepTeal-500 hover:to-deepTeal-400 mt-1 font-semibold shadow-sm"><i class="fa-solid fa-tv w-5"></i> Leadership Mode</button>
     </div>
 
@@ -1696,13 +1775,14 @@
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
             document.getElementById('attendance-view').classList.add('hidden');
+            document.getElementById('spiff-view').classList.add('hidden');
             _stopAuxTicker();
             _stopTrainTicker();
             _stopAttTicker();
             document.getElementById('stats-panel').classList.remove('hidden');
             document.getElementById('input-zone').classList.remove('hidden');
             document.getElementById('board-area').classList.remove('hidden');
-            ['tabNumbers','tabCoaching','tabOverview','tabAux','tabTraining','tabAttendance'].forEach(id => {
+            ['tabNumbers','tabCoaching','tabOverview','tabAux','tabTraining','tabAttendance','tabSpiff'].forEach(id => {
                 const e = document.getElementById(id);
                 e.classList.remove('bg-white','dark:bg-panel','text-deepTeal-600','border-gray-200','shadow-sm');
                 e.classList.add('text-gray-600','border-transparent');
@@ -1736,6 +1816,7 @@
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
             document.getElementById('attendance-view').classList.add('hidden');
+            document.getElementById('spiff-view').classList.add('hidden');
             _stopAuxTicker();
             _stopTrainTicker();
             _stopAttTicker();
@@ -1917,6 +1998,7 @@
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
             document.getElementById('attendance-view').classList.add('hidden');
+            document.getElementById('spiff-view').classList.add('hidden');
             _stopAuxTicker();
             _stopTrainTicker();
             _stopAttTicker();
@@ -1934,6 +2016,7 @@
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
             document.getElementById('attendance-view').classList.add('hidden');
+            document.getElementById('spiff-view').classList.add('hidden');
             _stopAuxTicker();
             _stopTrainTicker();
             _stopAttTicker();
@@ -2011,6 +2094,7 @@
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
             document.getElementById('attendance-view').classList.add('hidden');
+            document.getElementById('spiff-view').classList.add('hidden');
             _stopTrainTicker();
             _stopAttTicker();
             document.getElementById('aux-view').classList.remove('hidden');
@@ -2298,6 +2382,7 @@
             document.getElementById('overview-view').classList.add('hidden');
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('attendance-view').classList.add('hidden');
+            document.getElementById('spiff-view').classList.add('hidden');
             _stopAuxTicker();
             _stopAttTicker();
             document.getElementById('training-view').classList.remove('hidden');
@@ -2468,6 +2553,7 @@
             document.getElementById('aux-view').classList.add('hidden');
             document.getElementById('training-view').classList.add('hidden');
             document.getElementById('attendance-view').classList.add('hidden');
+            document.getElementById('spiff-view').classList.add('hidden');
             _stopAuxTicker();
             _stopTrainTicker();
             _stopAttTicker();
@@ -2622,6 +2708,118 @@
             const f = document.getElementById('attFrom').value, t = document.getElementById('attTo').value || f;
             downloadCSV(_buildAttRows(), `${_exportPrefix()}_Attendance_${f === t ? f : f + '_to_' + t}.csv`);
         }
+
+        /* ===================== SPIFF VALIDATION ===================== */
+        let spiffData = { eligibility: [], fails: [], teams: [] };
+        let _spiffSaveTimer = null;
+        const SPIFF_ELIG_STATUS = ['', 'Eligible', 'Not eligible'];
+        const SPIFF_FAIL_STATUS = ['Fail', 'Pass'];
+        const _uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+        async function openSpiff() {
+            ['numbers-view','coaching-view','overview-view','aux-view','training-view','attendance-view']
+                .forEach(id => document.getElementById(id).classList.add('hidden'));
+            _stopAuxTicker(); _stopTrainTicker(); _stopAttTicker();
+            document.getElementById('spiff-view').classList.remove('hidden');
+            _fade(document.getElementById('spiff-view'));
+            _activateReportTab('tabSpiff', 'mobileTabReports');
+            await loadSpiff();
+        }
+
+        async function loadSpiff() {
+            const { data, error } = await _client.from('spiff_sheet').select('*').eq('id', 1);
+            const row = (!error && data && data[0]) ? data[0] : null;
+            spiffData = row
+                ? { eligibility: Array.isArray(row.eligibility) ? row.eligibility : [],
+                    fails: Array.isArray(row.fails) ? row.fails : [],
+                    teams: Array.isArray(row.teams) ? row.teams : [] }
+                : { eligibility: [], fails: [], teams: ['Faith team','Jacob team','Sheril team','Sue','Nancy'] };
+            renderSpiff();
+        }
+
+        function _spiffMark(t) { const e = document.getElementById('spiff-status'); if (e) e.textContent = t; }
+        function saveSpiff() {
+            _spiffMark('Saving…');
+            if (_spiffSaveTimer) clearTimeout(_spiffSaveTimer);
+            _spiffSaveTimer = setTimeout(async () => {
+                const { error } = await _client.rpc('spiff_save', {
+                    p_pin: currentPin, p_eligibility: spiffData.eligibility,
+                    p_fails: spiffData.fails, p_teams: spiffData.teams
+                });
+                _spiffMark(error ? 'Save failed' : 'Saved ✓');
+                if (!error) setTimeout(() => _spiffMark(''), 1500);
+            }, 600);
+        }
+
+        function spiffAddElig() { spiffData.eligibility.push({ _id:_uid(), agent:'', transfers:'', status:'', team:'' }); renderSpiff(); saveSpiff(); }
+        function spiffDelElig(id) { spiffData.eligibility = spiffData.eligibility.filter(r => r._id !== id); renderSpiff(); saveSpiff(); }
+        function spiffSetElig(id, field, val) { const r = spiffData.eligibility.find(x => x._id === id); if (r) { r[field] = val; saveSpiff(); if (field === 'status' || field === 'team') renderSpiff(); } }
+
+        function spiffAddFail() { spiffData.fails.push({ _id:_uid(), call_date:'', number:'', name:'', dispo:'', state:'', status:'Fail', link:'', comment:'', time_stamp:'', listened:false }); renderSpiff(); saveSpiff(); }
+        function spiffDelFail(id) { spiffData.fails = spiffData.fails.filter(r => r._id !== id); renderSpiff(); saveSpiff(); }
+        function spiffSetFail(id, field, val) { const r = spiffData.fails.find(x => x._id === id); if (r) { r[field] = val; saveSpiff(); if (field === 'status') renderSpiff(); } }
+
+        function _spiffSel(value, opts, onchange, cls) {
+            return `<select onchange="${onchange}" class="${cls}">` +
+                opts.map(o => `<option value="${_esc(o)}" ${(_lc(o) === _lc(value)) ? 'selected' : ''}>${_esc(o) || '—'}</option>`).join('') + `</select>`;
+        }
+
+        function renderSpiff() {
+            spiffData.eligibility.forEach(r => { if (!r._id) r._id = _uid(); });
+            spiffData.fails.forEach(r => { if (!r._id) r._id = _uid(); });
+            const inp = 'w-full bg-transparent outline-none text-gray-800 dark:text-gray-100 px-1';
+            const statusCls = (s) => {
+                const base = 'w-full rounded-md px-2 py-1 text-xs font-semibold outline-none border cursor-pointer ';
+                const ls = _lc(s);
+                if (ls === 'eligible' || ls === 'pass') return base + 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30';
+                if (ls === 'not eligible' || ls === 'fail') return base + 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/30';
+                return base + 'bg-gray-50 dark:bg-base text-gray-600 dark:text-gray-300 border-gray-200 dark:border-borderline';
+            };
+            const teamCls = 'w-full rounded-md px-2 py-1 text-xs font-medium bg-gray-50 dark:bg-base border border-gray-200 dark:border-borderline text-gray-700 dark:text-gray-200 outline-none cursor-pointer';
+
+            const eb = document.getElementById('spiff-elig-body');
+            eb.innerHTML = spiffData.eligibility.length ? spiffData.eligibility.map(r => `<tr class="border-b border-gray-100 dark:border-borderline/60">
+                <td class="py-1.5 px-3"><input value="${_esc(r.agent)}" oninput="spiffSetElig('${r._id}','agent',this.value)" class="${inp} font-medium" placeholder="Name"></td>
+                <td class="py-1.5 px-3"><input type="number" value="${_esc(r.transfers)}" oninput="spiffSetElig('${r._id}','transfers',this.value)" class="${inp} tabular-nums"></td>
+                <td class="py-1.5 px-3">${_spiffSel(r.status, SPIFF_ELIG_STATUS, `spiffSetElig('${r._id}','status',this.value)`, statusCls(r.status))}</td>
+                <td class="py-1.5 px-3">${_spiffSel(r.team, ['', ...spiffData.teams], `spiffSetElig('${r._id}','team',this.value)`, teamCls)}</td>
+                <td class="py-1.5 px-3 text-right"><button onclick="spiffDelElig('${r._id}')" class="text-gray-400 hover:text-rose-500" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button></td>
+            </tr>`).join('') : `<tr><td colspan="5" class="py-6 text-center text-gray-400 text-sm">No rows yet — click “Add row”.</td></tr>`;
+
+            const fb = document.getElementById('spiff-fail-body');
+            fb.innerHTML = spiffData.fails.length ? spiffData.fails.map(r => `<tr class="border-b border-gray-100 dark:border-borderline/60 align-top">
+                <td class="py-1.5 px-2"><input type="date" value="${_esc(r.call_date)}" oninput="spiffSetFail('${r._id}','call_date',this.value)" class="${inp}"></td>
+                <td class="py-1.5 px-2"><input value="${_esc(r.number)}" oninput="spiffSetFail('${r._id}','number',this.value)" class="${inp}"></td>
+                <td class="py-1.5 px-2"><input value="${_esc(r.name)}" oninput="spiffSetFail('${r._id}','name',this.value)" class="${inp}"></td>
+                <td class="py-1.5 px-2"><input value="${_esc(r.dispo)}" oninput="spiffSetFail('${r._id}','dispo',this.value)" class="${inp}"></td>
+                <td class="py-1.5 px-2"><input value="${_esc(r.state)}" oninput="spiffSetFail('${r._id}','state',this.value)" class="${inp} uppercase"></td>
+                <td class="py-1.5 px-2">${_spiffSel(r.status, SPIFF_FAIL_STATUS, `spiffSetFail('${r._id}','status',this.value)`, statusCls(r.status))}</td>
+                <td class="py-1.5 px-2"><input value="${_esc(r.link)}" oninput="spiffSetFail('${r._id}','link',this.value)" placeholder="https://" class="${inp} text-deepTeal-600 dark:text-deepTeal-400"></td>
+                <td class="py-1.5 px-2"><textarea oninput="spiffSetFail('${r._id}','comment',this.value)" rows="2" class="${inp} resize-y">${_esc(r.comment)}</textarea></td>
+                <td class="py-1.5 px-2"><input value="${_esc(r.time_stamp)}" oninput="spiffSetFail('${r._id}','time_stamp',this.value)" placeholder="0:00" class="${inp} tabular-nums"></td>
+                <td class="py-1.5 px-2 text-center"><input type="checkbox" ${r.listened ? 'checked' : ''} onchange="spiffSetFail('${r._id}','listened',this.checked)" class="w-4 h-4 accent-deepTeal-600"></td>
+                <td class="py-1.5 px-2 text-right"><button onclick="spiffDelFail('${r._id}')" class="text-gray-400 hover:text-rose-500" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button></td>
+            </tr>`).join('') : `<tr><td colspan="11" class="py-6 text-center text-gray-400 text-sm">No fails yet — click “Add fail”.</td></tr>`;
+        }
+
+        // ---- editable team options ----
+        function openSpiffTeams() { renderSpiffTeams(); document.getElementById('spiff-teams-modal').classList.remove('hidden'); }
+        function closeSpiffTeams() { document.getElementById('spiff-teams-modal').classList.add('hidden'); }
+        function renderSpiffTeams() {
+            const box = document.getElementById('spiff-teams-list');
+            box.innerHTML = spiffData.teams.length ? spiffData.teams.map((t, i) => `<div class="flex items-center gap-2">
+                <input value="${_esc(t)}" oninput="spiffRenameTeam(${i}, this.value)" class="flex-grow bg-gray-50 dark:bg-base border border-gray-200 dark:border-borderline rounded-lg px-3 py-2 text-sm outline-none">
+                <button onclick="spiffDelTeam(${i})" class="text-gray-400 hover:text-rose-500 px-2" title="Remove"><i class="fa-solid fa-trash"></i></button>
+            </div>`).join('') : `<p class="text-xs text-gray-400">No teams yet — add one above.</p>`;
+        }
+        function spiffAddTeam() {
+            const el = document.getElementById('spiff-new-team'); const v = (el.value || '').trim();
+            if (!v) return;
+            spiffData.teams.push(v); el.value = '';
+            renderSpiffTeams(); renderSpiff(); saveSpiff();
+        }
+        function spiffRenameTeam(i, val) { if (spiffData.teams[i] != null) { spiffData.teams[i] = val; saveSpiff(); } }
+        function spiffDelTeam(i) { spiffData.teams.splice(i, 1); renderSpiffTeams(); renderSpiff(); saveSpiff(); }
 
         /* ===================== ADMIN (leaders only) ===================== */
         let adminUsers = [], adminDepts = [];
@@ -3516,7 +3714,7 @@
     <!-- Build stamp + service worker (network-only; no shell caching) -->
     <script>
         // Bump this string every deploy so the visible tag confirms which build is loaded.
-        const BUILD = '2026-06-24·b6';
+        const BUILD = '2026-06-24·b7';
         window.addEventListener('load', () => {
             const t = document.getElementById('buildTag');
             if (t) t.textContent = '· ' + BUILD;

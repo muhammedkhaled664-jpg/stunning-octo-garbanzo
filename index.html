@@ -45,6 +45,9 @@
             z-index: 1000; padding-bottom: env(safe-area-inset-bottom);
         }
         .dark .tactical-nav { background: rgba(11, 17, 33, 0.9); border-top: 1px solid #1E293B; }
+        /* The .tactical-nav display:flex above would otherwise beat Tailwind's
+           .hidden (display:none), making the bar show on the login screen. */
+        .tactical-nav.hidden { display: none; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #64748b; cursor: pointer; transition: all 0.2s ease; flex: 1; }
         .nav-item i { font-size: 20px; margin-bottom: 4px; }
         .nav-item span { font-size: 10px; font-weight: 600; }
@@ -3500,7 +3503,7 @@
     <!-- Build stamp + service worker (network-only; no shell caching) -->
     <script>
         // Bump this string every deploy so the visible tag confirms which build is loaded.
-        const BUILD = '2026-06-24·b2';
+        const BUILD = '2026-06-24·b3';
         window.addEventListener('load', () => {
             const t = document.getElementById('buildTag');
             if (t) t.textContent = '· ' + BUILD;

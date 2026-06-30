@@ -303,8 +303,8 @@
                         <button onclick="downloadTemplate('tasks')" class="text-xs text-gray-600 dark:text-gray-300 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-gray-200 dark:border-borderline"><i class="fa-solid fa-file-arrow-down mr-2"></i>Task Template</button>
                         <button onclick="backupAll()" id="backupBtn" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium py-2.5 rounded-lg bg-white dark:bg-panel shadow-sm border border-indigo-200 dark:border-indigo-500/30"><i class="fa-solid fa-shield-halved mr-2"></i>Backup All Data</button>
                         <button onclick="openAdmin()" id="adminBtn" class="hidden text-xs text-deepTeal-700 dark:text-deepTeal-300 font-semibold py-2.5 rounded-lg bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-deepTeal-500/10 dark:to-emerald-500/10 shadow-sm border border-teal-200 dark:border-deepTeal-500/30"><i class="fa-solid fa-users-gear mr-2"></i>Admin · Users &amp; Departments</button>
-                        <button onclick="archiveDone()" class="text-xs text-gray-500 hover:text-red-500 font-medium mt-2"><i class="fa-solid fa-trash mr-2"></i>Purge Closed</button>
-                        <button onclick="purgeParked()" id="purgeParkedBtn" class="hidden text-xs text-gray-500 hover:text-red-500 font-medium"><i class="fa-solid fa-box-archive mr-2"></i>Purge Parked</button>
+                        <button onclick="archiveDone()" class="text-xs text-gray-500 hover:text-red-500 font-medium mt-2"><i class="fa-solid fa-trash mr-2"></i>Purge Closed<span id="closedCount"></span></button>
+                        <button onclick="purgeParked()" id="purgeParkedBtn" class="hidden text-xs text-gray-500 hover:text-red-500 font-medium"><i class="fa-solid fa-box-archive mr-2"></i>Purge Parked<span id="parkedCount"></span></button>
                     </div>
                 </div>
                 
@@ -1176,6 +1176,13 @@
             // ---- Hierarchy scope: leader = all, manager = own department,
             //      agent = own tasks. An optional team-member selection narrows further.
             const data = applyTaskScope(allData);
+
+            // Purge buttons show how many would be removed (global counts — purge is
+            // leader-only and clears everything in that status).
+            const _cc = document.getElementById('closedCount');
+            if (_cc) { const n = allData.filter(t => t.status === 'DONE').length; _cc.textContent = n ? ` (${n})` : ''; }
+            const _pc = document.getElementById('parkedCount');
+            if (_pc) { const n = allData.filter(t => t.status === 'PARKED').length; _pc.textContent = n ? ` (${n})` : ''; }
 
             // Skip all re-rendering if nothing actually changed (huge iOS perf win on polling)
             const sig = currentView + '|' + currentFilter + '|' + (taskScopeMember||'') + '|' + data.map(t => `${t.id}:${t.status}:${t.has_flare?1:0}:${t.priority}:${(t.description||'').length}:${(t.briefing||'').length}`).join(',');
@@ -3514,7 +3521,7 @@
     <!-- Build stamp + service worker (network-only; no shell caching) -->
     <script>
         // Bump this string every deploy so the visible tag confirms which build is loaded.
-        const BUILD = '2026-06-24·b4';
+        const BUILD = '2026-06-24·b5';
         window.addEventListener('load', () => {
             const t = document.getElementById('buildTag');
             if (t) t.textContent = '· ' + BUILD;
